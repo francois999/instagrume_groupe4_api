@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
 use Nelmio\ApiDocBundle\Annotation\Model;
+
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -19,7 +20,6 @@ use OpenApi\Attributes as OA;
 
 use App\Service\JsonConverter;
 use App\Entity\User;
-use App\Entity\Type;
 
 class UserController extends AbstractController {
 
@@ -87,7 +87,7 @@ class UserController extends AbstractController {
         return new Response($this->jsonConverter->encodeToJson($user));
     }
 
-    #[Route('/api/users', methods: ['GET'])]
+    /* #[Route('/api/users', methods: ['GET'])]
     #[OA\Get(description: 'Retourne la liste de tous les utilisateurs')]
     #[OA\Response(
         response: 200,
@@ -104,5 +104,5 @@ class UserController extends AbstractController {
 
         $users = $entityManager->getRepository(User::class)->findAll();
         return new Response($this->jsonConverter->encodeToJson($users));
-    }
+    }*/
 }
