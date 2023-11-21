@@ -87,7 +87,7 @@ class UserController extends AbstractController {
         return new Response($this->jsonConverter->encodeToJson($user));
     }
 
-    /* #[Route('/api/users', methods: ['GET'])]
+    #[Route('/api/users', methods: ['GET'])]
     #[OA\Get(description: 'Retourne la liste de tous les utilisateurs')]
     #[OA\Response(
         response: 200,
@@ -104,5 +104,5 @@ class UserController extends AbstractController {
 
         $users = $entityManager->getRepository(User::class)->findAll();
         return new Response($this->jsonConverter->encodeToJson($users));
-    }*/
+    }
 }

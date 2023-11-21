@@ -32,6 +32,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Post::class)]
+    private Collection $posts;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Commentaire::class)]
+    private Collection $commentaires;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Like::class)]
+    private Collection $likes;
+
+    public function __construct()
+    {
+        $this->posts = new ArrayCollection();
+        $this->commentaires = new ArrayCollection();
+        $this->likes = new ArrayCollection();
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -100,5 +116,95 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    /**
+     * @return Collection<int, Post>
+     */
+    public function getPosts(): Collection
+    {
+        return $this->posts;
+    }
+
+    public function addPost(Post $post): static
+    {
+        if (!$this->posts->contains($post)) {
+            $this->posts->add($post);
+            $post->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removePost(Post $post): static
+    {
+        if ($this->posts->removeElement($post)) {
+            // set the owning side to null (unless already changed)
+            if ($post->getUser() === $this) {
+                $post->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Commentaire>
+     */
+    public function getCommentaires(): Collection
+    {
+        return $this->commentaires;
+    }
+
+    public function addCommentaire(Commentaire $commentaire): static
+    {
+        if (!$this->commentaires->contains($commentaire)) {
+            $this->commentaires->add($commentaire);
+            $commentaire->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommentaire(Commentaire $commentaire): static
+    {
+        if ($this->commentaires->removeElement($commentaire)) {
+            // set the owning side to null (unless already changed)
+            if ($commentaire->getUser() === $this) {
+                $commentaire->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Like>
+     */
+    public function getLikes(): Collection
+    {
+        return $this->likes;
+    }
+
+    public function addLike(Like $like): static
+    {
+        if (!$this->likes->contains($like)) {
+            $this->likes->add($like);
+            $like->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLike(Like $like): static
+    {
+        if ($this->likes->removeElement($like)) {
+            // set the owning side to null (unless already changed)
+            if ($like->getUser() === $this) {
+                $like->setUser(null);
+            }
+        }
+
+        return $this;
     }
 }
