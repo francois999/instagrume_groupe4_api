@@ -3,16 +3,13 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-use OpenApi\Attributes as OA;
-
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-class User implements UserInterface, PasswordAuthenticatedUserInterface {
+class User implements UserInterface, PasswordAuthenticatedUserInterface
+{
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -22,7 +19,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface {
     private ?string $username = null;
 
     #[ORM\Column]
-    #[OA\Property(type:"array", items: new OA\Items(type:"string"))]
     private array $roles = [];
 
     /**
@@ -31,23 +27,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface {
     #[ORM\Column]
     private ?string $password = null;
 
-    #[ORM\OneToMany(mappedBy: 'auteur', targetEntity: Incident::class)]
-    private Collection $incidents;
-
-    public function __construct()
+    public function getId(): ?int
     {
-        $this->incidents = new ArrayCollection();
-    }
-
-    public function getId(): ?int {
         return $this->id;
     }
 
-    public function getUsername(): ?string {
+    public function getUsername(): ?string
+    {
         return $this->username;
     }
 
-    public function setUsername(string $username): static {
+    public function setUsername(string $username): static
+    {
         $this->username = $username;
 
         return $this;
@@ -58,14 +49,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface {
      *
      * @see UserInterface
      */
-    public function getUserIdentifier(): string {
+    public function getUserIdentifier(): string
+    {
         return (string) $this->username;
     }
 
     /**
      * @see UserInterface
      */
-    public function getRoles(): array {
+    public function getRoles(): array
+    {
         $roles = $this->roles;
         // guarantee every user at least has ROLE_USER
         $roles[] = 'ROLE_USER';
@@ -73,7 +66,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface {
         return array_unique($roles);
     }
 
-    public function setRoles(array $roles): static {
+    public function setRoles(array $roles): static
+    {
         $this->roles = $roles;
 
         return $this;
@@ -82,11 +76,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface {
     /**
      * @see PasswordAuthenticatedUserInterface
      */
-    public function getPassword(): string {
+    public function getPassword(): string
+    {
         return $this->password;
     }
 
-    public function setPassword(string $password): static {
+    public function setPassword(string $password): static
+    {
         $this->password = $password;
 
         return $this;
@@ -95,38 +91,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface {
     /**
      * @see UserInterface
      */
-    public function eraseCredentials(): void {
+    public function eraseCredentials(): void
+    {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
-    }
-
-    /**
-     * @return Collection<int, Incident>
-     */
-    public function getIncidents(): Collection
-    {
-        return $this->incidents;
-    }
-
-    public function addIncident(Incident $incident): static
-    {
-        if (!$this->incidents->contains($incident)) {
-            $this->incidents->add($incident);
-            $incident->setAuteur($this);
-        }
-
-        return $this;
-    }
-
-    public function removeIncident(Incident $incident): static
-    {
-        if ($this->incidents->removeElement($incident)) {
-            // set the owning side to null (unless already changed)
-            if ($incident->getAuteur() === $this) {
-                $incident->setAuteur(null);
-            }
-        }
-
-        return $this;
     }
 }
