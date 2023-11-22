@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
+
 use Nelmio\ApiDocBundle\Annotation\Model;
 
 use Nelmio\ApiDocBundle\Annotation\Security;
@@ -21,12 +22,14 @@ use OpenApi\Attributes as OA;
 use App\Service\JsonConverter;
 use App\Entity\User;
 
-class UserController extends AbstractController {
+class UserController extends AbstractController
+{
 
     private $jsonConverter;
     private $passwordHasher;
 
-    public  function __construct(JsonConverter $jsonConverter, UserPasswordHasherInterface $passwordHasher) {
+    public function __construct(JsonConverter $jsonConverter, UserPasswordHasherInterface $passwordHasher)
+    {
         $this->passwordHasher = $passwordHasher;
         $this->jsonConverter = $jsonConverter;
     }
@@ -49,7 +52,8 @@ class UserController extends AbstractController {
         )
     )]
     #[OA\Tag(name: 'utilisateurs')]
-    public function logUser(ManagerRegistry $doctrine, JWTTokenManagerInterface $JWTManager) {
+    public function logUser(ManagerRegistry $doctrine, JWTTokenManagerInterface $JWTManager)
+    {
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
 
@@ -71,6 +75,40 @@ class UserController extends AbstractController {
         return new JsonResponse(['token' => $token]);
     }
 
+
+    #[Route('/api/users', methods: ['POST'])]
+    #[OA\Post(description: 'Crée un nouveau compte')]
+	#[OA\Response(
+		response: 200,
+		description: 'Le compte a été crée',
+        content: new OA\JsonContent(ref: new Model(type: User::class))
+	)]
+	#[OA\RequestBody(
+		required: true,
+		content: new OA\JsonContent(
+			type: 'object',
+			properties: [
+                new OA\Property(property: 'username', type: 'string'),
+				new OA\Property(property: 'password', type: 'number'),
+			]
+		)
+	)]
+	#[OA\Tag(name: 'users')]
+	public function createUser(ManagerRegistry $doctrine) {
+		$entityManager = $doctrine->getManager();
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(), true);
+       
+        $user = new user();
+        $user->setUsername($data['username']);
+        $user->setPassword($data['password']);
+
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        return new Response($this->jsonConverter->encodeToJson($user));
+    }
+
     #[Route('/api/myself', methods: ['GET'])]
     #[OA\Get(description: 'Retourne l\'utilisateur authentifié')]
     #[OA\Response(
@@ -79,7 +117,8 @@ class UserController extends AbstractController {
         content: new OA\JsonContent(ref: new Model(type: User::class))
     )]
     #[OA\Tag(name: 'utilisateurs')]
-    public function getUtilisateur(JWTEncoderInterface $jwtEncoder, Request $request) {
+    public function getUtilisateur(JWTEncoderInterface $jwtEncoder, Request $request)
+    {
         $tokenString = str_replace('Bearer ', '', $request->headers->get('Authorization'));
 
         $user = $jwtEncoder->decode($tokenString);
@@ -98,11 +137,37 @@ class UserController extends AbstractController {
         )
     )]
     #[OA\Tag(name: 'utilisateurs')]
-    public function getAllUsers(ManagerRegistry $doctrine) {
+    public function getAllUsers(ManagerRegistry $doctrine)
+    {
 
         $entityManager = $doctrine->getManager();
 
         $users = $entityManager->getRepository(User::class)->findAll();
         return new Response($this->jsonConverter->encodeToJson($users));
+    }
+
+    #[Route('/api/users/{username}', methods: ['GET'])]
+    #[OA\Get(description: 'Retourne un utilisateur en fonction de son pseudo')]
+    #[OA\Response(
+        response: 200,
+        description: 'L\'utilisateur correspondant au pseudo',
+        content: new OA\JsonContent(
+            type: 'object',
+            ref: new Model(type: User::class)
+        )
+    )]
+    #[OA\Tag(name: 'utilisateurs')]
+    public function getUserByUsername(ManagerRegistry $doctrine, string $username)
+    {
+        $entityManager = $doctrine->getManager();
+
+        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+
+        if (!$user) {
+            // Gérer le cas où l'utilisateur n'est pas trouvé (par exemple, retourner une erreur 404)
+            return new Response('Utilisateur non trouvé', 404);
+        }
+
+        return new Response($this->jsonConverter->encodeToJson($user));
     }
 }

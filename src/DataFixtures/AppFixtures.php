@@ -3,8 +3,8 @@
 namespace App\DataFixtures;
 
 use App\Entity\User;
-use App\Entity\Incident;
-use App\Entity\Type;
+use App\Entity\Like;
+use App\Entity\Commentaire;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -42,6 +42,17 @@ class AppFixtures extends Fixture {
         $userAdmin->setPassword($this->passwordHasher->hashPassword($userAdmin, 'password'));
         $manager->persist($userAdmin);
 
+        $comment1 = new Commentaire();
+        $comment1->setValeur('Ceci est un commentaire 1.');
+        $comment1->setUser($userStandard1);
+        $manager->persist($comment1);
+
+        $comment2 = new Commentaire();
+        $comment2->setValeur('Ceci est un commentaire 2.');
+        $comment2->setUser($userStandard2);
+        $manager->persist($comment2);
+
         $manager->flush();
+
     }
 }

@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\CommentaireRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CommentaireRepository::class)]
@@ -23,6 +24,7 @@ class Commentaire
 
     #[ORM\OneToMany(mappedBy: 'commentaire', targetEntity: Like::class)]
     private Collection $likes;
+
 
     public function __construct()
     {
@@ -87,4 +89,5 @@ class Commentaire
 
         return $this;
     }
+
 }
