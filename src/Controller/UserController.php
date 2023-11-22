@@ -71,6 +71,40 @@ class UserController extends AbstractController {
         return new JsonResponse(['token' => $token]);
     }
 
+
+    #[Route('/api/users', methods: ['POST'])]
+    #[OA\Post(description: 'Crée un nouveau compte')]
+	#[OA\Response(
+		response: 200,
+		description: 'Le compte a été crée',
+        content: new OA\JsonContent(ref: new Model(type: User::class))
+	)]
+	#[OA\RequestBody(
+		required: true,
+		content: new OA\JsonContent(
+			type: 'object',
+			properties: [
+                new OA\Property(property: 'username', type: 'string'),
+				new OA\Property(property: 'password', type: 'number'),
+			]
+		)
+	)]
+	#[OA\Tag(name: 'users')]
+	public function createUser(ManagerRegistry $doctrine) {
+		$entityManager = $doctrine->getManager();
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(), true);
+       
+        $user = new user();
+        $user->setUsername($data['username']);
+        $user->setPassword($data['password']);
+
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        return new Response($this->jsonConverter->encodeToJson($user));
+    }
+
     #[Route('/api/myself', methods: ['GET'])]
     #[OA\Get(description: 'Retourne l\'utilisateur authentifié')]
     #[OA\Response(
