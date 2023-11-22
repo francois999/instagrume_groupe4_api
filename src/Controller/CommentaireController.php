@@ -59,41 +59,48 @@ class CommentaireController extends AbstractController
     #[Route('/api/commentaires/{id}', methods: ['PUT'])]
     #[OA\Put(description: 'Modifie un commentaire et retourne ses informations')]
     #[OA\Response(
-		response: 200,
-		description: 'Le commentaire mis à jour',
+        response: 200,
+        description: 'Le commentaire mis à jour',
         content: new OA\JsonContent(ref: new Model(type: Commentaire::class))
-	)]
-	#[OA\RequestBody(
-		required: true,
-		content: new OA\JsonContent(
-			type: 'object',
-			properties: [
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
                 new OA\Property(property: 'valeur', type: 'string'),
-			]
-		)
-	)]
+            ]
+        )
+    )]
     #[OA\Tag(name: 'commentaires')]
-	public function updateCommentaire(ManagerRegistry $doctrine) {
-		$entityManager = $doctrine->getManager();
+    public function updateCommentaire(int $id, ManagerRegistry $doctrine) {
+        $entityManager = $doctrine->getManager();
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
-
-        $commentaire = $doctrine->getRepository(Commentaire::class)->find($data['id']);
-
+    
+        $commentaire = $doctrine->getRepository(Commentaire::class)->find($id);
+    
         if (!$commentaire) {
-            throw $this->createNotFoundException(
-                'Pas d\'commentaire'
-            );
+            throw $this->createNotFoundException('Pas d\'commentaire trouvé avec l\'ID ' . $id);
         }
-
+    
         $commentaire->setValeur($data['valeur']);
-
-        $like = $doctrine->getRepository(Like::class)->find($data['like']);
-
+    
+        // Vérifiez si le paramètre 'like' est défini dans la requête
+        if (isset($data['like'])) {
+            // Vous devez implémenter la logique appropriée ici pour gérer le Like
+            $like = $doctrine->getRepository(Like::class)->find($data['like']);
+    
+            if ($like) {
+                // Implémentez la logique de gestion du Like ici
+            }
+        }
+    
         $entityManager->persist($commentaire);
         $entityManager->flush();
-
-        return new Response($this->jsonConverter->encodeToJson($commentaire));
+    
+        // Utilisez JsonResponse pour simplifier la création de réponses JSON
+        return new JsonResponse($this->jsonConverter->encodeToJson($commentaire), 200);
     }
 
     #[Route('/api/delete/{id}', methods: ['DELETE'])]

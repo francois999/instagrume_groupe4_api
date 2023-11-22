@@ -43,12 +43,12 @@ class PostController extends AbstractController
             ref: new Model(type: Post::class)
         )
     )]
-    #[OA\Tag(name: 'utilisateurs')]
+    #[OA\Tag(name: 'posts')]
     public function getPostByPostname(ManagerRegistry $doctrine, string $username)
     {
         $entityManager = $doctrine->getManager();
 
-        $user = $entityManager->getRepository(Post::class)->findOneBy(['username' => $username]);
+        $user = $entityManager->getRepository(Post::class)->find(['username' => $username]);
 
         if (!$user) {
             return new Response('Utilisateur non trouvé', 404);
