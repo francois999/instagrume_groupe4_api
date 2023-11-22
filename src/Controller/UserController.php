@@ -88,8 +88,8 @@ class UserController extends AbstractController
 		content: new OA\JsonContent(
 			type: 'object',
 			properties: [
-                new OA\Property(property: 'username', type: 'string'),
-				new OA\Property(property: 'password', type: 'number'),
+                new OA\Property(property: 'username', type: 'string', default: 'test'),
+				new OA\Property(property: 'password', type: 'string', default: 'test'),
 			]
 		)
 	)]
@@ -101,7 +101,9 @@ class UserController extends AbstractController
        
         $user = new user();
         $user->setUsername($data['username']);
-        $user->setPassword($data['password']);
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
+        $user->setPassword($hashedPassword);
+        $user->setRoles(["ROLE_USER"]);
 
         $entityManager->persist($user);
         $entityManager->flush();
