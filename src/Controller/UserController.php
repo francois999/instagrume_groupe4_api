@@ -72,7 +72,7 @@ class UserController extends AbstractController {
     }
 
 
-    #[Route('/api/users', methods: ['POST'])]
+    #[Route('/api/inscription', methods: ['POST'])]
     #[OA\Post(description: 'Crée un nouveau compte')]
 	#[OA\Response(
 		response: 200,
@@ -86,25 +86,30 @@ class UserController extends AbstractController {
 			properties: [
                 new OA\Property(property: 'username', type: 'string', default: 'test'),
 				new OA\Property(property: 'password', type: 'string', default: 'test'),
+                new OA\Property(property: 'passwordConfirm', type: 'string', default: 'test'),
 			]
 		)
 	)]
-	#[OA\Tag(name: 'users')]
+	#[OA\Tag(name: 'inscription')]
 	public function createUser(ManagerRegistry $doctrine) {
 		$entityManager = $doctrine->getManager();
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
        
-        $user = new user();
-        $user->setUsername($data['username']);
-        $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
-        $user->setPassword($hashedPassword);
-        $user->setRoles(["ROLE_USER"]);
+        if ($data['password'] == $data['passwordConfirm']){
+            $user = new user();
+            $user->setUsername($data['username']);
+            $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
+            $user->setPassword($hashedPassword);
+            $user->setRoles(["ROLE_USER"]);
 
-        $entityManager->persist($user);
-        $entityManager->flush();
+            $entityManager->persist($user);
+            $entityManager->flush();
 
-        return new Response($this->jsonConverter->encodeToJson($user));
+            return new Response($this->jsonConverter->encodeToJson($user));
+        }
+        
+        return new Response('Mots de passe ne correspondent pas', 401);
     }
 
     #[Route('/api/myself', methods: ['GET'])]
