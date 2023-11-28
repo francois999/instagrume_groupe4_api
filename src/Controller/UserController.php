@@ -78,18 +78,18 @@ class UserController extends AbstractController
 
     #[Route('/api/inscription', methods: ['POST'])]
     #[OA\Post(description: 'Crée un nouveau compte')]
-	#[OA\Response(
-		response: 200,
-		description: 'Le compte a été crée',
+    #[OA\Response(
+        response: 200,
+        description: 'Le compte a été crée',
         content: new OA\JsonContent(ref: new Model(type: User::class))
-	)]
-	#[OA\RequestBody(
-		required: true,
-		content: new OA\JsonContent(
-			type: 'object',
-			properties: [
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
                 new OA\Property(property: 'username', type: 'string', default: 'test'),
-				new OA\Property(property: 'password', type: 'string', default: 'test'),
+                new OA\Property(property: 'password', type: 'string', default: 'test'),
                 new OA\Property(property: 'passwordConfirm', type: 'string', default: 'test'),
 			]
 		)
@@ -112,7 +112,7 @@ class UserController extends AbstractController
 
             return new Response($this->jsonConverter->encodeToJson($user));
         }
-        
+       
         return new Response('Mots de passe ne correspondent pas', 401);
     }
 
