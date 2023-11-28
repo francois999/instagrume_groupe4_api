@@ -158,7 +158,7 @@ class CommentaireController extends AbstractController
 
       #[Route('/api/commentaires', methods: ['POST'])]
       #[Security(name: null)]
-      #[OA\Post(description: 'Poster un commentaire')]
+      #[OA\Post(description: 'poster un commentaire')]
       #[OA\Response(
           response: 200,
           description: 'Un commentaire'
@@ -169,8 +169,8 @@ class CommentaireController extends AbstractController
               type: 'object',
               properties: [
                   new OA\Property(property: 'valeur', type: 'string', default: 'test'),
-                  new OA\Property(property: 'user_id', type: 'int', default: 1),
-                  new OA\Property(property: 'parent', type: 'int', default: 1)
+                  new OA\Property(property: 'user_id', type: 'int', default: '1'),
+                  new OA\Property(property: 'parent', type: 'int', default: '1')
               ]
           )
       )]
@@ -182,27 +182,14 @@ class CommentaireController extends AbstractController
   
           $entityManager = $doctrine->getManager();
           $comm = new Commentaire();
-  
-          $authorizationHeader = $request->headers->get('Authorization');
-
-          // Vérifier si le header Authorization est présent et commence par "Bearer "
-          if ($authorizationHeader && strpos($authorizationHeader, 'Bearer ') === 0) {
-              // Extraire le token en supprimant "Bearer " du début
-              $token = substr($authorizationHeader, 7);
-      
-              // Vous pouvez maintenant utiliser $token comme nécessaire
-          }
-          
-          $user = $tokenStorage->getToken()->getUser();
-          $comm->setUser($user);
-  
+          $user = $this->getUser();
+          $comm->setUser($data['valeur']);
           $comm->setValeur($data['valeur']);
-  
-          // Assurez-vous que la clé 'parent' existe dans les données avant de l'utiliser
-          $comm->setParent(isset($data['parent']) ? $data['parent'] : null);
-  
+          $comm->setParent($data['parent']);
+
           $entityManager->persist($comm);
           $entityManager->flush();
+  
   
           return new JsonResponse($this->jsonConverter->encodeToJson($comm));
       }
