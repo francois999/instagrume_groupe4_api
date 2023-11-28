@@ -153,7 +153,7 @@ class UserController extends AbstractController
         return new Response($this->jsonConverter->encodeToJson($users));
     }
 
-    #[Route('/api/users/{username}', methods: ['POST'])]
+    #[Route('/api/users/{username}', methods: ['GET'])]
     #[OA\Get(description: 'Retourne un utilisateur en fonction de son pseudo')]
     #[OA\Response(
         response: 200,
