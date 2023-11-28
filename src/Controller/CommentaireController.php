@@ -50,82 +50,89 @@ class CommentaireController extends AbstractController
     public function getCommentsForPost(ManagerRegistry $doctrine, Post $post)
     {
         $entityManager = $doctrine->getManager();
-    
+   
         $comments = $entityManager->getRepository(Commentaire::class)->findBy(['post' => $post]);
-    
+   
         return new Response($this->jsonConverter->encodeToJson($comments));
     }
 
     #[Route('/api/commentaires/{id}', methods: ['PUT'])]
     #[OA\Put(description: 'Modifie un commentaire et retourne ses informations')]
     #[OA\Response(
-		response: 200,
-		description: 'Le commentaire mis à jour',
+        response: 200,
+        description: 'Le commentaire mis à jour',
         content: new OA\JsonContent(ref: new Model(type: Commentaire::class))
-	)]
-	#[OA\RequestBody(
-		required: true,
-		content: new OA\JsonContent(
-			type: 'object',
-			properties: [
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
                 new OA\Property(property: 'valeur', type: 'string'),
-			]
-		)
-	)]
+            ]
+        )
+    )]
     #[OA\Tag(name: 'commentaires')]
-	public function updateCommentaire(ManagerRegistry $doctrine) {
-		$entityManager = $doctrine->getManager();
+    public function updateCommentaire(int $id, ManagerRegistry $doctrine) {
+        $entityManager = $doctrine->getManager();
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
-
-        $commentaire = $doctrine->getRepository(Commentaire::class)->find($data['id']);
-
+   
+        $commentaire = $doctrine->getRepository(Commentaire::class)->find($id);
+   
         if (!$commentaire) {
-            throw $this->createNotFoundException(
-                'Pas d\'commentaire'
-            );
+            throw $this->createNotFoundException('Pas d\'commentaire trouvé avec l\'ID ' . $id);
         }
-
+   
         $commentaire->setValeur($data['valeur']);
-
-        $like = $doctrine->getRepository(Like::class)->find($data['like']);
-
+   
+        // Vérifiez si le paramètre 'like' est défini dans la requête
+        if (isset($data['like'])) {
+            // Vous devez implémenter la logique appropriée ici pour gérer le Like
+            $like = $doctrine->getRepository(Like::class)->find($data['like']);
+   
+            if ($like) {
+                // Implémentez la logique de gestion du Like ici
+            }
+        }
+   
         $entityManager->persist($commentaire);
         $entityManager->flush();
-
-        return new Response($this->jsonConverter->encodeToJson($commentaire));
+   
+        // Utilisez JsonResponse pour simplifier la création de réponses JSON
+        return new JsonResponse($this->jsonConverter->encodeToJson($commentaire), 200);
     }
 
-    #[Route('/api/delete/{id}', methods: ['DELETE'])]
+    #[Route('/api/commentaires/{id}', methods: ['DELETE'])]
     #[OA\Delete(description: 'Supprime un commentaire correspondant à un identifiant')]
     #[OA\Response(
-		response: 200,
-		description: 'Le commentaire a été supprimé',
+        response: 200,
+        description: 'Le commentaire a été supprimé',
         content: new OA\JsonContent(ref: new Model(type: Commentaire::class))
-	)]
-	#[OA\Parameter(
-		name: 'id',
-		in: 'path',
-		schema: new OA\Schema(type: 'integer'),
-		required: true,
-		description: 'L\'identifiant d\'un commentaire'
-	)]
-	#[OA\Tag(name: 'commentaires')]
-	public function deleteCommentaire(ManagerRegistry $doctrine, $id) {
-		$entityManager = $doctrine->getManager();
+    )]
+    #[OA\Parameter(
+        name: 'id',
+        in: 'path',
+        schema: new OA\Schema(type: 'integer'),
+        required: true,
+        description: 'L\'identifiant d\'un commentaire'
+    )]
+    #[OA\Tag(name: 'commentaires')]
+    public function deleteCommentaire(ManagerRegistry $doctrine, $id) {
+        $entityManager = $doctrine->getManager();
 
-        $abeille = $entityManager->getRepository(Commentaire::class)->find($id);
+        $commentaire = $entityManager->getRepository(Commentaire::class)->find($id);
 
-        if (!$abeille) {
+        if (!$commentaire) {
             throw $this->createNotFoundException(
                 'Pas de commentaire avec id '.$id
             );
         }
 
-        $entityManager->remove($abeille);
+        $entityManager->remove($commentaire);
         $entityManager->flush();
 
-        return new Response($this->jsonConverter->encodeToJson($abeille));
+        return new Response($this->jsonConverter->encodeToJson($commentaire));
     }
 
 
@@ -144,7 +151,7 @@ class CommentaireController extends AbstractController
 
     public function getComments(ManagerRegistry $doctrine)
     {
-    
+   
         $entityManager = $doctrine->getManager();
 
         $commentaires = $entityManager->getRepository(Commentaire::class)->findAll();
