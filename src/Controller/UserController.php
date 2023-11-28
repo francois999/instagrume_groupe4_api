@@ -90,7 +90,7 @@ class UserController extends AbstractController {
 			]
 		)
 	)]
-	#[OA\Tag(name: 'users')]
+	#[OA\Tag(name: 'utilisateurs')]
 	public function createUser(ManagerRegistry $doctrine) {
 		$entityManager = $doctrine->getManager();
         $request = Request::createFromGlobals();

@@ -103,7 +103,7 @@ class CommentaireController extends AbstractController
         return new JsonResponse($this->jsonConverter->encodeToJson($commentaire), 200);
     }
 
-    #[Route('/api/delete/{id}', methods: ['DELETE'])]
+    #[Route('/api/commentaires/{id}', methods: ['DELETE'])]
     #[OA\Delete(description: 'Supprime un commentaire correspondant à un identifiant')]
     #[OA\Response(
 		response: 200,
@@ -121,18 +121,18 @@ class CommentaireController extends AbstractController
 	public function deleteCommentaire(ManagerRegistry $doctrine, $id) {
 		$entityManager = $doctrine->getManager();
 
-        $abeille = $entityManager->getRepository(Commentaire::class)->find($id);
+        $commentaire = $entityManager->getRepository(Commentaire::class)->find($id);
 
-        if (!$abeille) {
+        if (!$commentaire) {
             throw $this->createNotFoundException(
                 'Pas de commentaire avec id '.$id
             );
         }
 
-        $entityManager->remove($abeille);
+        $entityManager->remove($commentaire);
         $entityManager->flush();
 
-        return new Response($this->jsonConverter->encodeToJson($abeille));
+        return new Response($this->jsonConverter->encodeToJson($commentaire));
     }
 
 
