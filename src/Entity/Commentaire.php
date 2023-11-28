@@ -25,10 +25,17 @@ class Commentaire
     #[ORM\OneToMany(mappedBy: 'commentaire', targetEntity: Like::class)]
     private Collection $likes;
 
+    #[ORM\ManyToOne(inversedBy: 'reponses')]
+    private ?Commentaire $parent = null;
+
+    #[ORM\OneToMany(mappedBy: 'parent', targetEntity: Commentaire::class)]
+    private Collection $responses;
+
 
     public function __construct()
     {
         $this->likes = new ArrayCollection();
+        $this->responses = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -60,6 +67,18 @@ class Commentaire
         return $this;
     }
 
+    public function getParent(): ?Commentaire
+    {
+        return $this->parent;
+    }
+
+    public function setParent(?Commentaire $parent): static
+    {
+        $this->parent = $parent;
+
+        return $this;
+    }
+
     /**
      * @return Collection<int, Like>
      */
@@ -84,6 +103,36 @@ class Commentaire
             // set the owning side to null (unless already changed)
             if ($like->getCommentaire() === $this) {
                 $like->setCommentaire(null);
+            }
+        }
+
+        return $this;
+    }
+
+        /**
+     * @return Collection<int, Commentaire>
+     */
+    public function getResponses(): Collection
+    {
+        return $this->responses;
+    }
+
+    public function addResponse(Commentaire $response): static
+    {
+        if (!$this->responses->contains($response)) {
+            $this->responses->add($response);
+            $response->setParent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeResponse(Commentaire $response): static
+    {
+        if ($this->responses->removeElement($response)) {
+            // set the owning side to null (unless already changed)
+            if ($response->getParent() === $this) {
+                $response->setParent(null);
             }
         }
 

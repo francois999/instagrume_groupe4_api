@@ -52,6 +52,11 @@ class AppFixtures extends Fixture {
         $comment2->setUser($userStandard2);
         $manager->persist($comment2);
 
+        $commentaire2 = new Commentaire();
+        $commentaire2->setValeur("Ceci est une réponse à un commentaire");
+        $comment1->setUser($userStandard2);
+        $commentaire2->setParent($comment1);
+
         $manager->flush();
 
     }
