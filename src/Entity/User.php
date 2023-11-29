@@ -41,6 +41,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Like::class)]
     private Collection $likes;
 
+    #[ORM\Column]
+    private ?bool $banned = false;
+
     public function __construct()
     {
         $this->posts = new ArrayCollection();
@@ -204,6 +207,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $like->setUser(null);
             }
         }
+
+        return $this;
+    }
+
+    public function isBanned(): ?bool
+    {
+        return $this->banned;
+    }
+
+    public function setBanned(bool $banned): static
+    {
+        $this->banned = $banned;
 
         return $this;
     }
