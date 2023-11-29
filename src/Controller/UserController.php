@@ -20,6 +20,7 @@ use OpenApi\Attributes as OA;
 
 use App\Service\JsonConverter;
 use App\Entity\User;
+use App\Entity\Post;
 
 
 class UserController extends AbstractController
@@ -167,6 +168,7 @@ class UserController extends AbstractController
     public function getUserByUsername(ManagerRegistry $doctrine, string $username)
     {
         $entityManager = $doctrine->getManager();
+
 
         $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
 
