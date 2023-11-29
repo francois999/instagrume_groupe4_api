@@ -22,7 +22,8 @@ class PostController extends AbstractController
 
     private $jsonConverter;
 
-    public function __construct(JsonConverter $jsonConverter) {
+    public function __construct(JsonConverter $jsonConverter)
+    {
         $this->jsonConverter = $jsonConverter;
     }
 
@@ -53,24 +54,25 @@ class PostController extends AbstractController
 
     #[Route('/api/posts', methods: ['POST'])]
     #[OA\Post(description: 'Crée un nouveau compte')]
-	#[OA\Response(
-		response: 200,
-		description: 'Le compte a été crée',
+    #[OA\Response(
+        response: 200,
+        description: 'Le compte a été crée',
         content: new OA\JsonContent(ref: new Model(type: User::class))
-	)]
-	#[OA\RequestBody(
-		required: true,
-		content: new OA\JsonContent(
-			type: 'object',
-			properties: [
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
                 new OA\Property(property: 'username', type: 'string', default: 'test'),
-				new OA\Property(property: 'password', type: 'string', default: 'test'),
+                new OA\Property(property: 'password', type: 'string', default: 'test'),
                 new OA\Property(property: 'passwordConfirm', type: 'string', default: 'test'),
-			]
-		)
-	)]
-	#[OA\Tag(name: 'posts')]
-	public function createPost(Request $request): Response {
+            ]
+        )
+    )]
+    #[OA\Tag(name: 'posts')]
+    public function createPost(Request $request): Response
+    {
         $data = json_decode($request->getContent(), true);
 
         $post = new Post();
@@ -101,26 +103,27 @@ class PostController extends AbstractController
     #[Route('/api/posts/{id}', methods: ['DELETE'])]
     #[OA\Delete(description: 'Supprime un post correspondant à un identifiant')]
     #[OA\Response(
-		response: 200,
-		description: 'Le post a été supprimé',
+        response: 200,
+        description: 'Le post a été supprimé',
         content: new OA\JsonContent(ref: new Model(type: Post::class))
-	)]
-	#[OA\Parameter(
-		name: 'id',
-		in: 'path',
-		schema: new OA\Schema(type: 'integer'),
-		required: true,
-		description: 'L\'identifiant d\'un post'
-	)]
-	#[OA\Tag(name: 'posts')]
-	public function deletePost(ManagerRegistry $doctrine, $id) {
-		$entityManager = $doctrine->getManager();
+    )]
+    #[OA\Parameter(
+        name: 'id',
+        in: 'path',
+        schema: new OA\Schema(type: 'integer'),
+        required: true,
+        description: 'L\'identifiant d\'un post'
+    )]
+    #[OA\Tag(name: 'posts')]
+    public function deletePost(ManagerRegistry $doctrine, $id)
+    {
+        $entityManager = $doctrine->getManager();
 
         $post = $entityManager->getRepository(Post::class)->find($id);
 
         if (!$post) {
             throw $this->createNotFoundException(
-                'Pas de commentaire avec id '.$id
+                'Pas de commentaire avec id ' . $id
             );
         }
 
@@ -138,16 +141,47 @@ class PostController extends AbstractController
         description: 'La liste de tous les posts',
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: User::class))
+            items: new OA\Items(ref: new Model(type: Post::class))
         )
     )]
     #[OA\Tag(name: 'posts')]
-    public function getAllPosts(ManagerRegistry $doctrine) {
+    public function getAllPosts(ManagerRegistry $doctrine)
+    {
 
         $entityManager = $doctrine->getManager();
 
         $posts = $entityManager->getRepository(Post::class)->findAll();
         return new Response($this->jsonConverter->encodeToJson($posts));
     }
+
+    /*#[Route('/api/posts', methods: ['GET'])]
+    #[OA\Get(
+        description: 'Retourne le nombre de likes pour un post spécifique',
+        responses: [
+            '200' => new OA\Response(
+                description: 'Nombre de likes',
+                content: new OA\JsonContent(
+                    schema: new OA\Schema(type: 'String', properties: ['like_count' => ['type' => 'integer']])
+                )
+            )
+        ],
+    )]
+    #[OA\Tag(name: 'posts')]
+    public function getLikeCount(ManagerRegistry $doctrine, $id)
+    {
+        $entityManager = $doctrine->getManager();
+
+        // Récupérer le post
+        $post = $entityManager->getRepository(Post::class)->find($id);
+
+        if (!$post) {
+            throw $this->createNotFoundException('Pas de post avec id ' . $id);
+        }
+
+        // Récupérer le nombre de likes associés à ce post
+        $likeCount = count($post->getLikes());
+
+        return new Response($this->jsonConverter->encodeToJson(['like_count' => $likeCount]));
+    }*/
 
 }

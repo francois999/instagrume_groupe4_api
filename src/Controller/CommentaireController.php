@@ -175,23 +175,28 @@ class CommentaireController extends AbstractController
           )
       )]
       #[OA\Tag(name: 'commentaires')]
-      public function createCommentaire(ManagerRegistry $doctrine)
+      public function createCommentaire(JWTEncoderInterface $jwtEncoder, ManagerRegistry $doctrine): JsonResponse
       {
-          $request = Request::createFromGlobals();
-          $data = json_decode($request->getContent(), true);
-  
-          $entityManager = $doctrine->getManager();
-          $comm = new Commentaire();
-          $user = $this->getUser();
-          $comm->setUser($data['valeur']);
-          $comm->setValeur($data['valeur']);
-          $comm->setParent($data['parent']);
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(), true);
 
-          $entityManager->persist($comm);
-          $entityManager->flush();
-  
-  
-          return new JsonResponse($this->jsonConverter->encodeToJson($comm));
-      }
+        $user = $this->getUser();
+        $entityManager = $doctrine->getManager();
+        $comm = new Commentaire();
+        if (isset($data['valeur'])) {
+            $comm->setValeur($data['valeur']);
+        }
+        $comm->setUser($user);
+
+        if (isset($data['parent']) && is_numeric($data['parent'])) {
+            $parent = $entityManager->getRepository(Commentaire::class)->find($data['parent']);
+            $comm->setParent($parent);
+        }
+
+        $entityManager->persist($comm);
+        $entityManager->flush();
+
+        return new JsonResponse($this->jsonConverter->encodeToJson($comm));
+    }
 
 }
