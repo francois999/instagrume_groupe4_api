@@ -92,16 +92,17 @@ class UserController extends AbstractController
                 new OA\Property(property: 'username', type: 'string', default: 'test'),
                 new OA\Property(property: 'password', type: 'string', default: 'test'),
                 new OA\Property(property: 'passwordConfirm', type: 'string', default: 'test'),
-			]
-		)
-	)]
-	#[OA\Tag(name: 'utilisateurs')]
-	public function createUser(ManagerRegistry $doctrine) {
-		$entityManager = $doctrine->getManager();
+            ]
+        )
+    )]
+    #[OA\Tag(name: 'utilisateurs')]
+    public function createUser(ManagerRegistry $doctrine)
+    {
+        $entityManager = $doctrine->getManager();
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
-       
-        if ($data['password'] == $data['passwordConfirm']){
+
+        if ($data['password'] == $data['passwordConfirm']) {
             $user = new user();
             $user->setUsername($data['username']);
             $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
@@ -113,7 +114,7 @@ class UserController extends AbstractController
 
             return new Response($this->jsonConverter->encodeToJson($user));
         }
-       
+
         return new Response('Mots de passe ne correspondent pas', 401);
     }
 
@@ -178,5 +179,47 @@ class UserController extends AbstractController
         }
 
         return new Response($this->jsonConverter->encodeToJson($user));
+    }
+
+    #[Route('/api/ban/{username}', methods: ['POST'])]
+    #[OA\Get(description: 'Bannir ou debannir un utilisateur')]
+    #[OA\Response(
+        response: 200,
+        description: 'L\'utilisateur a été ban/deban',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                'message' => ['type' => 'string']
+            ]
+        )
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'username', type: 'string', default: 'test')
+            ]
+        )
+    )]
+    #[OA\Tag(name: 'utilisateurs')]
+    public function setBan(ManagerRegistry $doctrine)
+    {
+        $request = Request::createFromGlobals();
+        $username = json_decode($request->getContent(), true);
+
+        $entityManager = $doctrine->getManager();
+        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+
+        if (!$user) {
+            throw $this->createNotFoundException();
+        }
+
+        $user->setBanned(!$user->isBanned());
+
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        return ['message' => 'L\'état de bannissement de l\'utilisateur a été modifié avec succès.'];
     }
 }
