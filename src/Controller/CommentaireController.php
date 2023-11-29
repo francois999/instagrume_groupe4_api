@@ -85,14 +85,12 @@ class CommentaireController extends AbstractController
     
         $commentaire->setValeur($data['valeur']);
     
-        // Vérifiez si le paramètre 'like' est défini dans la requête
+        /*// Vérifiez si le paramètre 'like' est défini dans la requête
         if (isset($data['like'])) {
-            // Vous devez implémenter la logique appropriée ici pour gérer le Like
             $like = $doctrine->getRepository(Like::class)->find($data['like']);
             if ($like) {
-                // Implémentez la logique de gestion du Like ici
             }
-        }
+        }*/
     
         $entityManager->persist($commentaire);
         $entityManager->flush();

@@ -16,6 +16,7 @@ use App\Service\JsonConverter;
 use App\Entity\Commentaire;
 use App\Entity\Post;
 use App\Entity\User;
+use App\Entity\Like;
 
 class PostController extends AbstractController
 {
@@ -64,27 +65,33 @@ class PostController extends AbstractController
         content: new OA\JsonContent(
             type: 'object',
             properties: [
-                new OA\Property(property: 'username', type: 'string', default: 'test'),
-                new OA\Property(property: 'password', type: 'string', default: 'test'),
-                new OA\Property(property: 'passwordConfirm', type: 'string', default: 'test'),
+                new OA\Property(property: 'photo', type: 'string'),
+                new OA\Property(property: 'description', type: 'string', default: 'test'),
             ]
         )
     )]
     #[OA\Tag(name: 'posts')]
-    public function createPost(Request $request): Response
+    public function createPost(Request $request, ManagerRegistry $doctrine): Response
     {
         $data = json_decode($request->getContent(), true);
 
         $post = new Post();
         $post->setDescription($data['description']);
 
-        // Décodage et traitement de l'image base64
         $photoData = base64_decode($data['photo']);
         $photoFileName = md5(uniqid()) . '.png';
-        $photoFilePath = $this->getParameter('photos_directory') . '/' . $photoFileName;
-
+        
+        // Chemin vers le dossier des photos
+        $photosDirectory = $this->getParameter('kernel.project_dir') . '/public/photos/';
+        
+        // Chemin complet du fichier de l'image
+        $photoFilePath = $photosDirectory . $photoFileName;
+        
         // Enregistrement de l'image sur le serveur
         file_put_contents($photoFilePath, $photoData);
+        
+        // Associer le nom du fichier à l'entité Post
+        $post->setPhoto($photoFileName);
 
         // Associer le nom du fichier à l'entité Post
         $post->setPhoto($photoFileName);
@@ -92,7 +99,7 @@ class PostController extends AbstractController
         $user = $this->getUser();
         $post->setUser($user);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $doctrine->getManager();
         $entityManager->persist($post);
         $entityManager->flush();
 
@@ -154,34 +161,58 @@ class PostController extends AbstractController
         return new Response($this->jsonConverter->encodeToJson($posts));
     }
 
-    /*#[Route('/api/posts', methods: ['GET'])]
-    #[OA\Get(
-        description: 'Retourne le nombre de likes pour un post spécifique',
-        responses: [
-            '200' => new OA\Response(
-                description: 'Nombre de likes',
-                content: new OA\JsonContent(
-                    schema: new OA\Schema(type: 'String', properties: ['like_count' => ['type' => 'integer']])
-                )
-            )
-        ],
+    #[Route('/api/posts/{postid}/like', methods: ['GET'])]
+    #[OA\Get(description: 'Retourne le nombre de likes pour un post spécifique')]
+    #[OA\Response(
+        response: 200,
+        description: 'nombre de likes',
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Post::class))
+        )
     )]
     #[OA\Tag(name: 'posts')]
-    public function getLikeCount(ManagerRegistry $doctrine, $id)
+    public function getLikeCount(ManagerRegistry $doctrine, $postid)
     {
         $entityManager = $doctrine->getManager();
+    
+        $post = $entityManager->getRepository(Post::class)->find($postid);
+    
+        if (!$post) {
+            throw $this->createNotFoundException('Pas de post avec id ' . $postid);
+        }
+    
+        $likeCount = count($post->getLikes());
+    
+        return new Response($this->jsonConverter->encodeToJson(['like_count' => $likeCount]));
+    }
+    
+    #[Route('/api/posts/like', methods: ['POST'])]
+    #[OA\Tag(name: 'posts')]
+    public function addLike(int $postId,Request $request, ManagerRegistry $doctrine){
+        $entityManager = $doctrine->getManager();
 
-        // Récupérer le post
-        $post = $entityManager->getRepository(Post::class)->find($id);
+        $post = $entityManager->getRepository(Post::class)->find($postId);
 
         if (!$post) {
-            throw $this->createNotFoundException('Pas de post avec id ' . $id);
+            throw $this->createNotFoundException('Pas de post avec id ' . $postId);
         }
 
-        // Récupérer le nombre de likes associés à ce post
-        $likeCount = count($post->getLikes());
+        $user = $this->getUser();
+        $existingLike = $entityManager->getRepository(Like::class)->findOneBy(['user' => $user, 'post' => $post]);
 
-        return new Response($this->jsonConverter->encodeToJson(['like_count' => $likeCount]));
-    }*/
+        if ($existingLike) {
+            return new Response('Vous avez déjà liké ce post.', 400);
+        }
+
+        $like = new Like();
+        $like->setIsLiked(true);
+        $like->setUser($user);
+        $like->setPost($post);
+
+        $entityManager->persist($like);
+        $entityManager->flush();
+        return new Response($this->jsonConverter->encodeToJson($like));
+    }
 
 }
