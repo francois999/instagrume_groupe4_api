@@ -25,6 +25,9 @@ class Commentaire
     #[ORM\OneToMany(mappedBy: 'commentaire', targetEntity: Like::class)]
     private Collection $likes;
 
+    #[ORM\ManyToOne(inversedBy: 'commentaires')]
+    private ?Post $post = null;
+
     #[ORM\ManyToOne(inversedBy: 'reponses')]
     private ?Commentaire $parent = null;
 
@@ -41,6 +44,18 @@ class Commentaire
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getPost(): ?Post
+    {
+        return $this->post;
+    }
+
+    public function setPost(?Post $post): static
+    {
+        $this->post = $post;
+
+        return $this;
     }
 
     public function getValeur(): ?string
@@ -109,7 +124,7 @@ class Commentaire
         return $this;
     }
 
-        /**
+    /**
      * @return Collection<int, Commentaire>
      */
     public function getResponses(): Collection

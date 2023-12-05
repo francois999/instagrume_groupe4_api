@@ -30,7 +30,8 @@ class CommentaireController extends AbstractController
 
     private $jsonConverter;
 
-    public function __construct(JsonConverter $jsonConverter) {
+    public function __construct(JsonConverter $jsonConverter)
+    {
         $this->jsonConverter = $jsonConverter;
     }
 
@@ -50,9 +51,9 @@ class CommentaireController extends AbstractController
     public function getCommentsForPost(ManagerRegistry $doctrine, Post $post)
     {
         $entityManager = $doctrine->getManager();
-   
+
         $comments = $entityManager->getRepository(Commentaire::class)->findBy(['post' => $post]);
-   
+
         return new Response($this->jsonConverter->encodeToJson($comments));
     }
 
@@ -73,28 +74,29 @@ class CommentaireController extends AbstractController
         )
     )]
     #[OA\Tag(name: 'commentaires')]
-    public function updateCommentaire(int $id, ManagerRegistry $doctrine) {
+    public function updateCommentaire(int $id, ManagerRegistry $doctrine)
+    {
         $entityManager = $doctrine->getManager();
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
         $commentaire = $doctrine->getRepository(Commentaire::class)->find($id);
-    
+
         if (!$commentaire) {
             throw $this->createNotFoundException('Pas d\'commentaire trouvé avec l\'ID ' . $id);
         }
-    
+
         $commentaire->setValeur($data['valeur']);
-    
+
         /*// Vérifiez si le paramètre 'like' est défini dans la requête
         if (isset($data['like'])) {
             $like = $doctrine->getRepository(Like::class)->find($data['like']);
             if ($like) {
             }
         }*/
-    
+
         $entityManager->persist($commentaire);
         $entityManager->flush();
-    
+
         // Utilisez JsonResponse pour simplifier la création de réponses JSON
         return new JsonResponse($this->jsonConverter->encodeToJson($commentaire), 200);
     }
@@ -114,14 +116,15 @@ class CommentaireController extends AbstractController
         description: 'L\'identifiant d\'un commentaire'
     )]
     #[OA\Tag(name: 'commentaires')]
-    public function deleteCommentaire(ManagerRegistry $doctrine, $id) {
+    public function deleteCommentaire(ManagerRegistry $doctrine, $id)
+    {
         $entityManager = $doctrine->getManager();
 
         $commentaire = $entityManager->getRepository(Commentaire::class)->find($id);
 
         if (!$commentaire) {
             throw $this->createNotFoundException(
-                'Pas de commentaire avec id '.$id
+                'Pas de commentaire avec id ' . $id
             );
         }
 
@@ -147,44 +150,49 @@ class CommentaireController extends AbstractController
 
     public function getComments(ManagerRegistry $doctrine)
     {
-   
+
         $entityManager = $doctrine->getManager();
 
         $commentaires = $entityManager->getRepository(Commentaire::class)->findAll();
         return new Response($this->jsonConverter->encodeToJson($commentaires));
-      }
+    }
 
-      #[Route('/api/commentaires', methods: ['POST'])]
-      #[Security(name: null)]
-      #[OA\Post(description: 'poster un commentaire')]
-      #[OA\Response(
-          response: 200,
-          description: 'Un commentaire'
-      )]
-      #[OA\RequestBody(
-          required: true,
-          content: new OA\JsonContent(
-              type: 'object',
-              properties: [
-                  new OA\Property(property: 'valeur', type: 'string', default: 'test'),
-                  new OA\Property(property: 'user_id', type: 'int', default: '1'),
-                  new OA\Property(property: 'parent', type: 'int', default: '1')
-              ]
-          )
-      )]
-      #[OA\Tag(name: 'commentaires')]
-      public function createCommentaire(JWTEncoderInterface $jwtEncoder, ManagerRegistry $doctrine): JsonResponse
-      {
+    #[Route('/api/commentaires', methods: ['POST'])]
+    #[Security(name: null)]
+    #[OA\Post(description: 'poster un commentaire')]
+    #[OA\Response(
+        response: 200,
+        description: 'Un commentaire'
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'valeur', type: 'string', default: 'test'),
+                new OA\Property(property: 'user_id', type: 'int', default: '1'),
+                new OA\Property(property: 'post_id', type: 'int', default: '1'),
+                new OA\Property(property: 'parent', type: 'int', default: '1')
+            ]
+        )
+    )]
+    #[OA\Tag(name: 'commentaires')]
+    public function createCommentaire(JWTEncoderInterface $jwtEncoder, ManagerRegistry $doctrine): JsonResponse
+    {
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
 
         $user = $this->getUser();
         $entityManager = $doctrine->getManager();
+
         $comm = new Commentaire();
         if (isset($data['valeur'])) {
             $comm->setValeur($data['valeur']);
         }
         $comm->setUser($user);
+
+        $post = $entityManager->getRepository(Post::class)->find($data['post_id']);
+        $comm->setPost($post);
 
         if (isset($data['parent']) && is_numeric($data['parent'])) {
             $parent = $entityManager->getRepository(Commentaire::class)->find($data['parent']);

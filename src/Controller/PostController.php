@@ -83,17 +83,9 @@ class PostController extends AbstractController
         
         // Chemin vers le dossier des photos
         $photosDirectory = $this->getParameter('kernel.project_dir') . '/public/photos/';
-        
-        // Chemin complet du fichier de l'image
         $photoFilePath = $photosDirectory . $photoFileName;
-        
-        // Enregistrement de l'image sur le serveur
         file_put_contents($photoFilePath, $photoData);
-        
-        // Associer le nom du fichier à l'entité Post
         $post->setPhoto($photoFileName);
-
-        // Associer le nom du fichier à l'entité Post
         $post->setPhoto($photoFileName);
 
         $user = $this->getUser();
