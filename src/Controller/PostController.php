@@ -28,8 +28,8 @@ class PostController extends AbstractController
         $this->jsonConverter = $jsonConverter;
     }
 
-    #[Route('/api/posts/{username}', methods: ['GET'])]
-    #[OA\Get(description: 'Retourne les post d/un utilisateur')]
+    #[Route('/api/posts/user', methods: ['GET'])]
+    #[OA\Get(description: 'Retourne les post d\'un utilisateur')]
     #[OA\Response(
         response: 200,
         description: 'L\'utilisateur correspondant au pseudo',
@@ -39,41 +39,47 @@ class PostController extends AbstractController
         )
     )]
     #[OA\Tag(name: 'posts')]
-    public function getPostByPostname(ManagerRegistry $doctrine, string $username)
+    public function getPostByPostname(ManagerRegistry $doctrine, Request $request)
     {
+        $username = $request->query->get('username');
+    
+        if (!$username) {
+            return new Response('Le paramètre "username" est manquant dans la requête.', 400);
+        }
+    
         $entityManager = $doctrine->getManager();
-
-        $user = $entityManager->getRepository(Post::class)->find(['username' => $username]);
-
+    
+        $user = $entityManager->getRepository(Post::class)->findOneBy(['username' => $username]);
+    
         if (!$user) {
             return new Response('Utilisateur non trouvé', 404);
         }
-
+    
         return new Response($this->jsonConverter->encodeToJson($user));
     }
 
     #[Route('/api/posts/{id}', methods: ['GET'])]
-    #[OA\Get(description: 'Retourne les post par id')]
+    #[OA\Get(description: 'Retourne un post par son identifiant')]
     #[OA\Response(
-        response: 200,
-        description: 'L\'utilisateur correspondant au pseudo',
+        response: 200,  
+        description: 'Le post correspondant à l\'identifiant',
         content: new OA\JsonContent(
             type: 'object',
             ref: new Model(type: Post::class)
         )
     )]
     #[OA\Tag(name: 'posts')]
-    public function getPostById(ManagerRegistry $doctrine, string $username)
+    public function getPostById(ManagerRegistry $doctrine, $id)
     {
         $entityManager = $doctrine->getManager();
 
-        $user = $entityManager->getRepository(Post::class)->find(['username' => $username]);
+        $post = $entityManager->getRepository(Post::class)->find($id);
 
-        if (!$user) {
-            return new Response('Utilisateur non trouvé', 404);
+        if (!$post) {
+            return new Response('Post non trouvé', 404);
         }
 
-        return new Response($this->jsonConverter->encodeToJson($user));
+        return new Response($this->jsonConverter->encodeToJson($post));
     }
 
 
@@ -104,7 +110,7 @@ class PostController extends AbstractController
 
         $photoData = base64_decode($data['photo']);
         $photoFileName = md5(uniqid()) . '.png';
-        
+
         // Chemin vers le dossier des photos
         $photosDirectory = $this->getParameter('kernel.project_dir') . '/public/photos/';
         $photoFilePath = $photosDirectory . $photoFileName;
@@ -191,21 +197,22 @@ class PostController extends AbstractController
     public function getLikeCount(ManagerRegistry $doctrine, $postid)
     {
         $entityManager = $doctrine->getManager();
-    
+
         $post = $entityManager->getRepository(Post::class)->find($postid);
-    
+
         if (!$post) {
             throw $this->createNotFoundException('Pas de post avec id ' . $postid);
         }
-    
+
         $likeCount = count($post->getLikes());
-    
+
         return new Response($this->jsonConverter->encodeToJson(['like_count' => $likeCount]));
     }
-    
+
     #[Route('/api/posts/like', methods: ['POST'])]
     #[OA\Tag(name: 'posts')]
-    public function addLike(int $postId,Request $request, ManagerRegistry $doctrine){
+    public function addLike(int $postId, Request $request, ManagerRegistry $doctrine)
+    {
         $entityManager = $doctrine->getManager();
 
         $post = $entityManager->getRepository(Post::class)->find($postId);
