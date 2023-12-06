@@ -181,7 +181,7 @@ class UserController extends AbstractController
         return new Response($this->jsonConverter->encodeToJson($user));
     }
 
-    #[Route('/api/ban/{username}', methods: ['POST'])]
+    #[Route('/api/ban', methods: ['PUT'])]
     #[OA\Get(description: 'Bannir ou debannir un utilisateur')]
     #[OA\Response(
         response: 200,
@@ -203,13 +203,12 @@ class UserController extends AbstractController
         )
     )]
     #[OA\Tag(name: 'utilisateurs')]
-    public function setBan(ManagerRegistry $doctrine)
+    public function setBan(ManagerRegistry $doctrine,  Request $request)
     {
-        $request = Request::createFromGlobals();
-        $username = json_decode($request->getContent(), true);
-
         $entityManager = $doctrine->getManager();
-        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+        $data = json_decode($request->getContent(), true);
+        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $data['username']]);
+
 
         if (!$user) {
             throw $this->createNotFoundException();
