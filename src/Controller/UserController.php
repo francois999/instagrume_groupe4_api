@@ -193,7 +193,7 @@ class UserController extends AbstractController
             ]
         )
     )]
-    #[OA\RequestBody(
+    /*#[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
             type: 'object',
@@ -201,7 +201,7 @@ class UserController extends AbstractController
                 new OA\Property(property: 'username', type: 'string', default: 'test')
             ]
         )
-    )]
+    )]*/
     #[OA\Tag(name: 'utilisateurs')]
     public function setBan(ManagerRegistry $doctrine,  Request $request)
     {
