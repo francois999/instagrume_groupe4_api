@@ -52,6 +52,30 @@ class PostController extends AbstractController
         return new Response($this->jsonConverter->encodeToJson($user));
     }
 
+    #[Route('/api/posts/{id}', methods: ['GET'])]
+    #[OA\Get(description: 'Retourne les post par id')]
+    #[OA\Response(
+        response: 200,
+        description: 'L\'utilisateur correspondant au pseudo',
+        content: new OA\JsonContent(
+            type: 'object',
+            ref: new Model(type: Post::class)
+        )
+    )]
+    #[OA\Tag(name: 'posts')]
+    public function getPostById(ManagerRegistry $doctrine, string $username)
+    {
+        $entityManager = $doctrine->getManager();
+
+        $user = $entityManager->getRepository(Post::class)->find(['username' => $username]);
+
+        if (!$user) {
+            return new Response('Utilisateur non trouvé', 404);
+        }
+
+        return new Response($this->jsonConverter->encodeToJson($user));
+    }
+
 
     #[Route('/api/posts', methods: ['POST'])]
     #[OA\Post(description: 'Crée un nouveau compte')]
