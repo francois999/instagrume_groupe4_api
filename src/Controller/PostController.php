@@ -111,7 +111,6 @@ class PostController extends AbstractController
         $photoFilePath = $photosDirectory . $photoFileName;
         file_put_contents($photoFilePath, $photoData);
         $post->setPhoto($photoFileName);
-        $post->setPhoto($photoFileName);
 
         $user = $this->getUser();
         $post->setUser($user);

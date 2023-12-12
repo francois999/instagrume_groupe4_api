@@ -19,7 +19,7 @@ class Commentaire
     #[ORM\Column(length: 255)]
     private ?string $valeur = null;
 
-    #[ORM\ManyToOne(inversedBy: 'commentaires')]
+    #[ORM\ManyToOne(inversedBy: 'commentaires', cascade: ['persist'])]
     private ?User $user = null;
 
     #[ORM\OneToMany(mappedBy: 'commentaire', targetEntity: Like::class)]

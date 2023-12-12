@@ -22,6 +22,7 @@ use OpenApi\Attributes as OA;
 
 use App\Service\JsonConverter;
 use App\Entity\Commentaire;
+use App\Entity\User;
 use App\Entity\Post;
 use App\Entity\Like;
 
@@ -158,7 +159,6 @@ class CommentaireController extends AbstractController
     }
 
     #[Route('/api/commentaires', methods: ['POST'])]
-    #[Security(name: null)]
     #[OA\Post(description: 'poster un commentaire')]
     #[OA\Response(
         response: 200,
@@ -170,26 +170,23 @@ class CommentaireController extends AbstractController
             type: 'object',
             properties: [
                 new OA\Property(property: 'valeur', type: 'string', default: 'test'),
-                new OA\Property(property: 'user_id', type: 'int', default: '1'),
                 new OA\Property(property: 'post_id', type: 'int', default: '1'),
                 new OA\Property(property: 'parent', type: 'int', default: '1')
             ]
         )
     )]
     #[OA\Tag(name: 'commentaires')]
-    public function createCommentaire(JWTEncoderInterface $jwtEncoder, ManagerRegistry $doctrine): JsonResponse
+    public function createCommentaire(JWTEncoderInterface $jwtEncoder, ManagerRegistry $doctrine)
     {
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
 
-        $user = $this->getUser();
         $entityManager = $doctrine->getManager();
 
         $comm = new Commentaire();
         if (isset($data['valeur'])) {
             $comm->setValeur($data['valeur']);
         }
-        $comm->setUser($user);
 
         $post = $entityManager->getRepository(Post::class)->find($data['post_id']);
         $comm->setPost($post);
@@ -199,10 +196,14 @@ class CommentaireController extends AbstractController
             $comm->setParent($parent);
         }
 
+        $user = $this->getUser();
+        $comm->setUser($user);
+
+
         $entityManager->persist($comm);
         $entityManager->flush();
 
-        return new JsonResponse($this->jsonConverter->encodeToJson($comm));
+        return new Response($this->jsonConverter->encodeToJson($user));
     }
 
 }
