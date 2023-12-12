@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use PhpParser\Node\Expr\PostDec;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,34 +29,28 @@ class PostController extends AbstractController
         $this->jsonConverter = $jsonConverter;
     }
 
-    #[Route('/api/posts/user', methods: ['GET'])]
-    #[OA\Get(description: 'Retourne les post d\'un utilisateur')]
+    #[Route('/api/filtre/{username}', methods: ['GET'])]
+    #[OA\Get(description: 'Retourne un post par son name')]
     #[OA\Response(
-        response: 200,
-        description: 'L\'utilisateur correspondant au pseudo',
+        response: 200,  
+        description: 'Le post correspondant à l\'identifiant',
         content: new OA\JsonContent(
             type: 'object',
             ref: new Model(type: Post::class)
         )
     )]
-    #[OA\Tag(name: 'posts')]
-    public function getPostByPostname(ManagerRegistry $doctrine, Request $request)
+    public function getPostByPostname(ManagerRegistry $doctrine, $username)
     {
-        $username = $request->query->get('username');
-    
-        if (!$username) {
-            return new Response('Le paramètre "username" est manquant dans la requête.', 400);
-        }
-    
         $entityManager = $doctrine->getManager();
+
+        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+        $post = $entityManager->getRepository(Post::class)->findOneBy(['user' => $user]);
     
-        $user = $entityManager->getRepository(Post::class)->findOneBy(['username' => $username]);
-    
-        if (!$user) {
-            return new Response('Utilisateur non trouvé', 404);
+        if (!$post) {
+            return new Response('Post non trouvé', 404);
         }
     
-        return new Response($this->jsonConverter->encodeToJson($user));
+        return new Response($this->jsonConverter->encodeToJson($post));
     }
 
     #[Route('/api/posts/{id}', methods: ['GET'])]
