@@ -23,14 +23,12 @@ use App\Entity\User;
 use App\Entity\Post;
 
 
-class UserController extends AbstractController
-{
+class UserController extends AbstractController {
 
     private $jsonConverter;
     private $passwordHasher;
 
-    public function __construct(JsonConverter $jsonConverter, UserPasswordHasherInterface $passwordHasher)
-    {
+    public function __construct(JsonConverter $jsonConverter, UserPasswordHasherInterface $passwordHasher) {
         $this->passwordHasher = $passwordHasher;
         $this->jsonConverter = $jsonConverter;
     }
@@ -53,22 +51,21 @@ class UserController extends AbstractController
         )
     )]
     #[OA\Tag(name: 'utilisateurs')]
-    public function logUser(ManagerRegistry $doctrine, JWTTokenManagerInterface $JWTManager)
-    {
+    public function logUser(ManagerRegistry $doctrine, JWTTokenManagerInterface $JWTManager) {
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
 
-        if (!is_array($data) || $data == null || empty($data['username']) || empty($data['password'])) {
+        if(!is_array($data) || $data == null || empty($data['username']) || empty($data['password'])) {
             return new Response('Identifiants invalides', 401);
         }
 
         $entityManager = $doctrine->getManager();
         $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $data['username']]);
 
-        if (!$user) {
+        if(!$user) {
             throw $this->createNotFoundException();
         }
-        if (!$this->passwordHasher->isPasswordValid($user, $data['password'])) {
+        if(!$this->passwordHasher->isPasswordValid($user, $data['password'])) {
             return new Response('Identifiants invalides', 401);
         }
 
@@ -96,18 +93,18 @@ class UserController extends AbstractController
         )
     )]
     #[OA\Tag(name: 'utilisateurs')]
-    public function createUser(ManagerRegistry $doctrine)
-    {
+    public function createUser(ManagerRegistry $doctrine) {
         $entityManager = $doctrine->getManager();
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
 
-        if ($data['password'] == $data['passwordConfirm']) {
+        if($data['password'] == $data['passwordConfirm']) {
             $user = new user();
             $user->setUsername($data['username']);
             $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
             $user->setPassword($hashedPassword);
             $user->setRoles(["ROLE_USER"]);
+            $user->setBanned(false);
 
             $entityManager->persist($user);
             $entityManager->flush();
@@ -126,13 +123,22 @@ class UserController extends AbstractController
         content: new OA\JsonContent(ref: new Model(type: User::class))
     )]
     #[OA\Tag(name: 'utilisateurs')]
-    public function getUtilisateur(JWTEncoderInterface $jwtEncoder, Request $request)
-    {
+    public function getUtilisateur(JWTEncoderInterface $jwtEncoder, Request $request, ManagerRegistry $doctrine) {
         $tokenString = str_replace('Bearer ', '', $request->headers->get('Authorization'));
+        $userArray = $jwtEncoder->decode($tokenString);
 
-        $user = $jwtEncoder->decode($tokenString);
+        //RECUPERER LES INFOS DE USER
+        $entityManager = $doctrine->getManager();
+        $username = $userArray['username'];
+        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+        $userData = [
+            'id' => $user->getId(),
+            'username' => $user->getUsername(),
+            'roles' => $user->getRoles(),
+            'banned' => $user->isBanned(),
+        ];
 
-        return new Response($this->jsonConverter->encodeToJson($user));
+        return new Response($this->jsonConverter->encodeToJson($userData));
     }
 
     #[Route('/api/users', methods: ['GET'])]
@@ -146,8 +152,7 @@ class UserController extends AbstractController
         )
     )]
     #[OA\Tag(name: 'utilisateurs')]
-    public function getAllUsers(ManagerRegistry $doctrine)
-    {
+    public function getAllUsers(ManagerRegistry $doctrine) {
 
         $entityManager = $doctrine->getManager();
 
@@ -166,14 +171,13 @@ class UserController extends AbstractController
         )
     )]
     #[OA\Tag(name: 'utilisateurs')]
-    public function getUserByUsername(ManagerRegistry $doctrine, string $username)
-    {
+    public function getUserByUsername(ManagerRegistry $doctrine, string $username) {
         $entityManager = $doctrine->getManager();
 
 
         $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
 
-        if (!$user) {
+        if(!$user) {
             // Gérer le cas où l'utilisateur n'est pas trouvé (par exemple, retourner une erreur 404)
             return new Response('Utilisateur non trouvé', 404);
         }
@@ -181,7 +185,7 @@ class UserController extends AbstractController
         return new Response($this->jsonConverter->encodeToJson($user));
     }
 
-    #[Route('/api/ban', methods: ['PUT'])]
+    #[Route('/api/ban/{username}', methods: ['PUT'])]
     #[OA\Get(description: 'Bannir ou debannir un utilisateur')]
     #[OA\Response(
         response: 200,
@@ -193,24 +197,13 @@ class UserController extends AbstractController
             ]
         )
     )]
-    /*#[OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            type: 'object',
-            properties: [
-                new OA\Property(property: 'username', type: 'string', default: 'test')
-            ]
-        )
-    )]*/
     #[OA\Tag(name: 'utilisateurs')]
-    public function setBan(ManagerRegistry $doctrine,  Request $request)
-    {
+    public function setBan(ManagerRegistry $doctrine, Request $request, string $username) {
         $entityManager = $doctrine->getManager();
-        $data = json_decode($request->getContent(), true);
-        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $data['username']]);
+        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
 
 
-        if (!$user) {
+        if(!$user) {
             throw $this->createNotFoundException();
         }
 
@@ -219,6 +212,6 @@ class UserController extends AbstractController
         $entityManager->persist($user);
         $entityManager->flush();
 
-        return ['message' => 'L\'état de bannissement de l\'utilisateur a été modifié avec succès.'];
+        return new Response(null);
     }
 }

@@ -23,6 +23,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $username = null;
 
     #[ORM\Column]
+    private ?bool $banned = false;
+
+    #[ORM\Column]
     #[OA\Property(type:"array", items: new OA\Items(type:"string"))]
     private array $roles = [];
 
@@ -41,8 +44,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Like::class)]
     private Collection $likes;
 
-    #[ORM\Column]
-    private ?bool $banned = false;
+    
 
     public function __construct()
     {
