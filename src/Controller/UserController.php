@@ -212,6 +212,57 @@ class UserController extends AbstractController {
         $entityManager->persist($user);
         $entityManager->flush();
 
-        return new Response(null);
+        return new Response("L'utilisateur a bien été ban");
+    }
+
+    #[Route('/api/changerMdp', methods: ['PUT'])]
+    #[OA\Post(description: 'Modifier le mdp')]
+    #[OA\Response(
+        response: 200,
+        description: 'Le mdp a été modifié',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                'message' => ['type' => 'string']
+            ]
+        )
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'username', type: 'string', default: 'username'),
+                new OA\Property(property: 'password', type: 'string', default: 'password'),
+                new OA\Property(property: 'newPassword', type: 'string', default: 'password'),
+                new OA\Property(property: 'newPasswordConfirm', type: 'string', default: 'password'),
+            ]
+        )
+    )]
+    #[OA\Tag(name: 'utilisateurs')]
+    public function changerMdp(ManagerRegistry $doctrine) {
+        $entityManager = $doctrine->getManager();
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(), true);
+        
+
+        $entityManager = $doctrine->getManager();
+        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $data['username']]);
+
+        if(!$this->passwordHasher->isPasswordValid($user, $data['password'])) {
+            return new Response('Ancien mot de passe invalide', 401);
+        }
+
+        if($data['newPassword'] == $data['newPasswordConfirm']) {
+            $hashedPassword = $this->passwordHasher->hashPassword($user, $data['newPassword']);
+            $user->setPassword($hashedPassword);
+
+            $entityManager->persist($user);
+            $entityManager->flush();
+
+            return new Response("Mot de passe changé");
+        }
+
+        return new Response('Mots de passe ne correspondent pas');
     }
 }
