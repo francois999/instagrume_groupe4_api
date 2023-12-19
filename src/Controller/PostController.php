@@ -188,7 +188,7 @@ class PostController extends AbstractController
         )
     )]
     #[OA\Tag(name: 'posts')]
-    public function getLikeCount(ManagerRegistry $doctrine, $postid)
+    public function getLikeCount(ManagerRegistry $doctrine, int $postid)
     {
         $entityManager = $doctrine->getManager();
 
@@ -203,11 +203,11 @@ class PostController extends AbstractController
         return new Response($this->jsonConverter->encodeToJson(['like_count' => $likeCount]));
     }
 
-    #[Route('/api/posts/like', methods: ['POST'])]
+    #[Route('/api/posts/like/{postId}', methods: ['POST'])]
     #[OA\Tag(name: 'posts')]
     public function addLike(int $postId, Request $request, ManagerRegistry $doctrine)
     {
-        $entityManager = $doctrine->getManager();
+        /*$entityManager = $doctrine->getManager();
 
         $post = $entityManager->getRepository(Post::class)->find($postId);
 
@@ -229,7 +229,7 @@ class PostController extends AbstractController
 
         $entityManager->persist($like);
         $entityManager->flush();
-        return new Response($this->jsonConverter->encodeToJson($like));
+        return new Response($this->jsonConverter->encodeToJson($like));*/ return null;
     }
 
 }
