@@ -79,7 +79,7 @@ class PostController extends AbstractController
 
 
     #[Route('/api/posts', methods: ['POST'])]
-    #[OA\Post(description: 'Crée un nouveau compte')]
+    #[OA\Post(description: 'Crée un nouveau post')]
     #[OA\Response(
         response: 200,
         description: 'Le compte a été crée',

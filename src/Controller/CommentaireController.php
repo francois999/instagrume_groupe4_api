@@ -158,7 +158,7 @@ class CommentaireController extends AbstractController
         return new Response($this->jsonConverter->encodeToJson($commentaires));
     }
 
-    #[Route('/api/commentaires', methods: ['POST'])]
+    #[Route('/api/commentaires/{post}', methods: ['POST'])]
     #[OA\Post(description: 'poster un commentaire')]
     #[OA\Response(
         response: 200,
@@ -170,13 +170,12 @@ class CommentaireController extends AbstractController
             type: 'object',
             properties: [
                 new OA\Property(property: 'valeur', type: 'string', default: 'test'),
-                new OA\Property(property: 'post_id', type: 'int', default: '1'),
                 new OA\Property(property: 'parent', type: 'int', default: '1')
             ]
         )
     )]
     #[OA\Tag(name: 'commentaires')]
-    public function createCommentaire(JWTEncoderInterface $jwtEncoder, ManagerRegistry $doctrine)
+    public function createCommentaire(JWTEncoderInterface $jwtEncoder, ManagerRegistry $doctrine, $post)
     {
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
@@ -188,8 +187,8 @@ class CommentaireController extends AbstractController
             $comm->setValeur($data['valeur']);
         }
 
-        $post = $entityManager->getRepository(Post::class)->find($data['post_id']);
-        $comm->setPost($post);
+        $postEntity = $entityManager->getRepository(Post::class)->find($post);
+        $comm->setPost($postEntity);
 
         if (isset($data['parent']) && is_numeric($data['parent'])) {
             $parent = $entityManager->getRepository(Commentaire::class)->find($data['parent']);
