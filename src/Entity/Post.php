@@ -27,9 +27,13 @@ class Post
     #[ORM\OneToMany(mappedBy: 'post', targetEntity: Like::class)]
     private Collection $likes;
 
+    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Dislike::class)]
+    private Collection $dislikes;
+
     public function __construct()
     {
         $this->likes = new ArrayCollection();
+        $this->dislikes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -97,6 +101,36 @@ class Post
             // set the owning side to null (unless already changed)
             if ($like->getPost() === $this) {
                 $like->setPost(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Dislike>
+     */
+    public function getDislikes(): Collection
+    {
+        return $this->dislikes;
+    }
+
+    public function addDislike(Dislike $dislike): static
+    {
+        if (!$this->dislikes->contains($dislike)) {
+            $this->dislikes->add($dislike);
+            $dislike->setPost($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDislike(Dislike $dislike): static
+    {
+        if ($this->dislikes->removeElement($dislike)) {
+            // set the owning side to null (unless already changed)
+            if ($dislike->getPost() === $this) {
+                $dislike->setPost(null);
             }
         }
 

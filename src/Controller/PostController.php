@@ -18,6 +18,7 @@ use App\Entity\Commentaire;
 use App\Entity\Post;
 use App\Entity\User;
 use App\Entity\Like;
+use App\Entity\Dislike;
 
 class PostController extends AbstractController
 {
@@ -32,7 +33,7 @@ class PostController extends AbstractController
     #[Route('/api/filtre/{username}', methods: ['GET'])]
     #[OA\Get(description: 'Retourne un post par son name')]
     #[OA\Response(
-        response: 200,  
+        response: 200,
         description: 'Le post correspondant à l\'identifiant',
         content: new OA\JsonContent(
             type: 'object',
@@ -45,18 +46,18 @@ class PostController extends AbstractController
 
         $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
         $post = $entityManager->getRepository(Post::class)->findOneBy(['user' => $user]);
-    
+
         if (!$post) {
             return new Response('Post non trouvé', 404);
         }
-    
+
         return new Response($this->jsonConverter->encodeToJson($post));
     }
 
     #[Route('/api/posts/{id}', methods: ['GET'])]
     #[OA\Get(description: 'Retourne un post par son identifiant')]
     #[OA\Response(
-        response: 200,  
+        response: 200,
         description: 'Le post correspondant à l\'identifiant',
         content: new OA\JsonContent(
             type: 'object',
@@ -216,20 +217,68 @@ class PostController extends AbstractController
         }
 
         $user = $this->getUser();
-        $existingLike = $entityManager->getRepository(Like::class)->findOneBy(['user' => $user, 'post' => $post]);
 
-        if ($existingLike) {
-            return new Response($this->jsonConverter->encodeToJson("Post déjà liké"));
+        if (!$user)
+            return new Response($this->jsonConverter->encodeToJson("Connexion requise"));
+
+        $dislike = $entityManager->getRepository(Dislike::class)->findOneBy(['user' => $user, 'post' => $post]);
+
+        if ($dislike) {
+            $entityManager->remove($dislike);
+            $entityManager->flush();
         }
 
+        $like = $entityManager->getRepository(Like::class)->findOneBy(['user' => $user, 'post' => $post]);
+        if ($like) {
+            $entityManager->remove($like);
+            $entityManager->flush();
+            return new Response($this->jsonConverter->encodeToJson("Like retiré"));
+        }
         $like = new Like();
-        $like->setIsLiked(true);
         $like->setUser($user);
         $like->setPost($post);
 
         $entityManager->persist($like);
         $entityManager->flush();
         return new Response($this->jsonConverter->encodeToJson("Post liké"));
+
+    }
+
+    #[Route('/api/posts/dislike/{postId}', methods: ['POST'])]
+    #[OA\Tag(name: 'posts')]
+    public function addDislike(int $postId, Request $request, ManagerRegistry $doctrine)
+    {
+        $entityManager = $doctrine->getManager();
+
+        $post = $entityManager->getRepository(Post::class)->find($postId);
+
+        if (!$post) {
+            throw $this->createNotFoundException('Pas de post avec id ' . $postId);
+        }
+
+        $user = $this->getUser();
+
+        $like = $entityManager->getRepository(Like::class)->findOneBy(['user' => $user, 'post' => $post]);
+        if ($like) {
+            $entityManager->remove($like);
+            $entityManager->flush();
+        }
+
+        $dislike = $entityManager->getRepository(Dislike::class)->findOneBy(['user' => $user, 'post' => $post]);
+
+        if ($dislike) {
+            $entityManager->remove($dislike);
+            $entityManager->flush();
+            return new Response($this->jsonConverter->encodeToJson("Disliké retiré"));
+        }
+
+        $dislike = new Dislike();
+        $dislike->setUser($user);
+        $dislike->setPost($post);
+
+        $entityManager->persist($dislike);
+        $entityManager->flush();
+        return new Response($this->jsonConverter->encodeToJson("Post disliké"));
     }
 
 }

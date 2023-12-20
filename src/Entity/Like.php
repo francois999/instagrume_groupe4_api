@@ -14,9 +14,6 @@ class Like
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?bool $isLiked = null;
-
     #[ORM\ManyToOne(inversedBy: 'likes')]
     private ?user $user = null;
 
@@ -29,18 +26,6 @@ class Like
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function isIsLiked(): ?bool
-    {
-        return $this->isLiked;
-    }
-
-    public function setIsLiked(?bool $isLiked): static
-    {
-        $this->isLiked = $isLiked;
-
-        return $this;
     }
 
     public function getUser(): ?user
