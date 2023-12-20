@@ -207,7 +207,7 @@ class PostController extends AbstractController
     #[OA\Tag(name: 'posts')]
     public function addLike(int $postId, Request $request, ManagerRegistry $doctrine)
     {
-        /*$entityManager = $doctrine->getManager();
+        $entityManager = $doctrine->getManager();
 
         $post = $entityManager->getRepository(Post::class)->find($postId);
 
@@ -219,7 +219,7 @@ class PostController extends AbstractController
         $existingLike = $entityManager->getRepository(Like::class)->findOneBy(['user' => $user, 'post' => $post]);
 
         if ($existingLike) {
-            return new Response('Vous avez déjà liké ce post.', 400);
+            return new Response($this->jsonConverter->encodeToJson("Post déjà liké"));
         }
 
         $like = new Like();
@@ -229,7 +229,7 @@ class PostController extends AbstractController
 
         $entityManager->persist($like);
         $entityManager->flush();
-        return new Response($this->jsonConverter->encodeToJson($like));*/ return null;
+        return new Response($this->jsonConverter->encodeToJson("Post liké"));
     }
 
 }
