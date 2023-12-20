@@ -264,6 +264,9 @@ class PostController extends AbstractController
             $entityManager->flush();
         }
 
+        if (!$user)
+            return new Response($this->jsonConverter->encodeToJson("Connexion requise"));
+
         $dislike = $entityManager->getRepository(Dislike::class)->findOneBy(['user' => $user, 'post' => $post]);
 
         if ($dislike) {
@@ -279,6 +282,34 @@ class PostController extends AbstractController
         $entityManager->persist($dislike);
         $entityManager->flush();
         return new Response($this->jsonConverter->encodeToJson("Post disliké"));
+    }
+
+    #[Route('/api/posts/username/{postId}', methods: ['GET'])]
+    #[OA\Get(description: 'Retourne l\'username de l\'utilisateur qui a posté un post')]
+    /*#[OA\Response(
+        response: 200,
+        description: 'L\'username de l\'utilisateur',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'username', type: 'string'),
+            ]
+        )
+    )]*/
+    #[OA\Tag(name: 'posts')]
+    public function getUsernameByPostId(ManagerRegistry $doctrine, int $postId)
+    {
+        $entityManager = $doctrine->getManager();
+
+        $post = $entityManager->getRepository(Post::class)->find($postId);
+
+        if (!$post) {
+            throw $this->createNotFoundException('Pas de post avec id ' . $postId);
+        }
+
+        $username = $post->getUser()->getUsername();
+
+        return new Response($this->jsonConverter->encodeToJson($username));
     }
 
 }
