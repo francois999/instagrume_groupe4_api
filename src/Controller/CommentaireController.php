@@ -58,7 +58,7 @@ class CommentaireController extends AbstractController
         return new Response($this->jsonConverter->encodeToJson($comments));
     }
 
-    #[Route('/api/commentaires/{id}', methods: ['PUT'])]
+    #[Route('/api/commentaires', methods: ['PUT'])]
     #[OA\Put(description: 'Modifie un commentaire et retourne ses informations')]
     #[OA\Response(
         response: 200,
@@ -71,15 +71,17 @@ class CommentaireController extends AbstractController
             type: 'object',
             properties: [
                 new OA\Property(property: 'valeur', type: 'string'),
+                new OA\Property(property: 'id', type: 'int'),
             ]
         )
     )]
     #[OA\Tag(name: 'commentaires')]
-    public function updateCommentaire(int $id, ManagerRegistry $doctrine)
+    public function updateCommentaire(ManagerRegistry $doctrine)
     {
         $entityManager = $doctrine->getManager();
         $request = Request::createFromGlobals();
         $data = json_decode($request->getContent(), true);
+        $id = $data['id'];
         $commentaire = $doctrine->getRepository(Commentaire::class)->find($id);
 
         if (!$commentaire) {
@@ -99,7 +101,7 @@ class CommentaireController extends AbstractController
         $entityManager->flush();
 
         // Utilisez JsonResponse pour simplifier la création de réponses JSON
-        return new JsonResponse($this->jsonConverter->encodeToJson($commentaire), 200);
+        return new Response($this->jsonConverter->encodeToJson($commentaire), 200);
     }
 
     #[Route('/api/commentaires/{id}', methods: ['DELETE'])]
