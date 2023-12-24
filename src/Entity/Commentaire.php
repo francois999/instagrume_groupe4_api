@@ -25,6 +25,9 @@ class Commentaire
     #[ORM\OneToMany(mappedBy: 'commentaire', targetEntity: Like::class)]
     private Collection $likes;
 
+    #[ORM\OneToMany(mappedBy: 'commentaire', targetEntity: Dislike::class)]
+    private Collection $dislikes;
+
     #[ORM\ManyToOne(inversedBy: 'commentaires')]
     private ?Post $post = null;
 
@@ -118,6 +121,36 @@ class Commentaire
             // set the owning side to null (unless already changed)
             if ($like->getCommentaire() === $this) {
                 $like->setCommentaire(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Dislike>
+     */
+    public function getDislikes(): Collection
+    {
+        return $this->dislikes;
+    }
+
+    public function addDislike(Dislike $dislike): static
+    {
+        if (!$this->dislikes->contains($dislike)) {
+            $this->dislikes->add($dislike);
+            $dislike->setCommentaire($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDislike(Dislike $dislike): static
+    {
+        if ($this->dislikes->removeElement($dislike)) {
+            // set the owning side to null (unless already changed)
+            if ($dislike->getCommentaire() === $this) {
+                $dislike->setCommentaire(null);
             }
         }
 

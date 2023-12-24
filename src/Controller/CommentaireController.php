@@ -25,6 +25,7 @@ use App\Entity\Commentaire;
 use App\Entity\User;
 use App\Entity\Post;
 use App\Entity\Like;
+use App\Entity\Dislike;
 
 class CommentaireController extends AbstractController
 {
@@ -205,6 +206,105 @@ class CommentaireController extends AbstractController
         $entityManager->flush();
 
         return new Response($this->jsonConverter->encodeToJson($user));
+    }
+
+    #[Route('/api/commentaire/like/{commentaireId}', methods: ['POST'])]
+    #[OA\Tag(name: 'commentaires')]
+    public function addLike(int $commentaireId, Request $request, ManagerRegistry $doctrine)
+    {
+        $entityManager = $doctrine->getManager();
+
+        $commentaire = $entityManager->getRepository(Commentaire::class)->find($commentaireId);
+
+        if (!$commentaire) {
+            throw $this->createNotFoundException('Pas de commentaire avec id ' . $commentaireId);
+        }
+
+        $user = $this->getUser();
+
+        if (!$user)
+            return new Response($this->jsonConverter->encodeToJson("Connexion requise"));
+
+        $dislike = $entityManager->getRepository(Dislike::class)->findOneBy(['user' => $user, 'commentaire' => $commentaire]);
+
+        if ($dislike) {
+            $entityManager->remove($dislike);
+            $entityManager->flush();
+        }
+
+        $like = $entityManager->getRepository(Like::class)->findOneBy(['user' => $user, 'commentaire' => $commentaire]);
+        if ($like) {
+            $entityManager->remove($like);
+            $entityManager->flush();
+            return new Response($this->jsonConverter->encodeToJson("Like retiré"));
+        }
+        $like = new Like();
+        $like->setUser($user);
+        $like->setCommentaire($commentaire);
+
+        $entityManager->persist($like);
+        $entityManager->flush();
+        return new Response($this->jsonConverter->encodeToJson("Commentaire liké"));
+
+
+    }
+
+    #[Route('/api/commentaire/dislike/{commentaireId}', methods: ['POST'])]
+    #[OA\Tag(name: 'commentaires')]
+    public function addDislike(int $commentaireId, Request $request, ManagerRegistry $doctrine)
+    {
+        $entityManager = $doctrine->getManager();
+
+        $commentaire = $entityManager->getRepository(Commentaire::class)->find($commentaireId);
+
+        if (!$commentaire) {
+            throw $this->createNotFoundException('Pas de commentaire avec id ' . $commentaireId);
+        }
+
+        $user = $this->getUser();
+
+        $like = $entityManager->getRepository(Like::class)->findOneBy(['user' => $user, 'commentaire' => $commentaire]);
+        if ($like) {
+            $entityManager->remove($like);
+            $entityManager->flush();
+        }
+
+        if (!$user)
+            return new Response($this->jsonConverter->encodeToJson("Connexion requise"));
+
+        $dislike = $entityManager->getRepository(Dislike::class)->findOneBy(['user' => $user, 'commentaire' => $commentaire]);
+
+        if ($dislike) {
+            $entityManager->remove($dislike);
+            $entityManager->flush();
+            return new Response($this->jsonConverter->encodeToJson("Disliké retiré"));
+        }
+
+        $dislike = new Dislike();
+        $dislike->setUser($user);
+        $dislike->setCommentaire($commentaire);
+
+        $entityManager->persist($dislike);
+        $entityManager->flush();
+        return new Response($this->jsonConverter->encodeToJson("Commentaire disliké"));
+    }
+
+    #[Route('/api/posts/id/{commentaireId}', methods: ['GET'])]
+    #[OA\Get(description: 'Retourne l\'username de l\'utilisateur qui a posté un commentaire')]
+    #[OA\Tag(name: 'commentaires')]
+    public function getPostIdByCommentaireId(ManagerRegistry $doctrine, int $commentaireId)
+    {
+        $entityManager = $doctrine->getManager();
+
+        $commentaire = $entityManager->getRepository(Commentaire::class)->find($commentaireId);
+
+        if (!$commentaire) {
+            throw $this->createNotFoundException('Pas de commentaire avec id ' . $commentaireId);
+        }
+
+        $postId = $commentaire->getPost()->getId();
+
+        return new Response($this->jsonConverter->encodeToJson($postId));
     }
 
 }

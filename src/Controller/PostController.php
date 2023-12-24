@@ -286,16 +286,6 @@ class PostController extends AbstractController
 
     #[Route('/api/posts/username/{postId}', methods: ['GET'])]
     #[OA\Get(description: 'Retourne l\'username de l\'utilisateur qui a posté un post')]
-    /*#[OA\Response(
-        response: 200,
-        description: 'L\'username de l\'utilisateur',
-        content: new OA\JsonContent(
-            type: 'object',
-            properties: [
-                new OA\Property(property: 'username', type: 'string'),
-            ]
-        )
-    )]*/
     #[OA\Tag(name: 'posts')]
     public function getUsernameByPostId(ManagerRegistry $doctrine, int $postId)
     {
