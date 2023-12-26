@@ -135,6 +135,7 @@ class UserController extends AbstractController {
             'id' => $user->getId(),
             'username' => $user->getUsername(),
             'roles' => $user->getRoles(),
+            'posts' => $user->getPosts(),
             'banned' => $user->isBanned(),
         ];
 
