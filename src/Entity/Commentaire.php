@@ -28,7 +28,7 @@ class Commentaire
     #[ORM\OneToMany(mappedBy: 'commentaire', targetEntity: Dislike::class)]
     private Collection $dislikes;
 
-    #[ORM\ManyToOne(inversedBy: 'commentaires')]
+    #[ORM\ManyToOne(inversedBy: 'commentaires', cascade: ['remove'])]
     private ?Post $post = null;
 
     #[ORM\ManyToOne(inversedBy: 'reponses')]

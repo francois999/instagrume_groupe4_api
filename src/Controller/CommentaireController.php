@@ -91,17 +91,9 @@ class CommentaireController extends AbstractController
 
         $commentaire->setValeur($data['valeur']);
 
-        /*// Vérifiez si le paramètre 'like' est défini dans la requête
-        if (isset($data['like'])) {
-            $like = $doctrine->getRepository(Like::class)->find($data['like']);
-            if ($like) {
-            }
-        }*/
-
         $entityManager->persist($commentaire);
         $entityManager->flush();
 
-        // Utilisez JsonResponse pour simplifier la création de réponses JSON
         return new Response($this->jsonConverter->encodeToJson($commentaire), 200);
     }
 
@@ -290,7 +282,7 @@ class CommentaireController extends AbstractController
     }
 
     #[Route('/api/posts/id/{commentaireId}', methods: ['GET'])]
-    #[OA\Get(description: 'Retourne l\'username de l\'utilisateur qui a posté un commentaire')]
+    #[OA\Get(description: 'Retourne un commentaire selon son id')]
     #[OA\Tag(name: 'commentaires')]
     public function getPostIdByCommentaireId(ManagerRegistry $doctrine, int $commentaireId)
     {
@@ -305,6 +297,48 @@ class CommentaireController extends AbstractController
         $postId = $commentaire->getPost()->getId();
 
         return new Response($this->jsonConverter->encodeToJson($postId));
+    }
+
+
+    #[Route('/api/reponse/{commentaireId}', methods: ['POST'])]
+    #[OA\Post(description: 'poster une reponse')]
+    #[OA\Response(
+        response: 200,
+        description: 'Un commentaire'
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'valeur', type: 'string', default: 'test'),
+            ]
+        )
+    )]
+    #[OA\Tag(name: 'commentaires')]
+    public function createReponse(JWTEncoderInterface $jwtEncoder, ManagerRegistry $doctrine, $commentaireId)
+    {
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(), true);
+
+        $entityManager = $doctrine->getManager();
+
+        $comm = new Commentaire();
+        if (isset($data['valeur'])) {
+            $comm->setValeur($data['valeur']);
+        }
+
+        
+        $comm->setParent($commentaireId);
+
+        $user = $this->getUser();
+        $comm->setUser($user);
+
+
+        $entityManager->persist($comm);
+        $entityManager->flush();
+
+        return new Response($this->jsonConverter->encodeToJson($user));
     }
 
 }

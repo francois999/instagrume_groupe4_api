@@ -302,4 +302,42 @@ class PostController extends AbstractController
         return new Response($this->jsonConverter->encodeToJson($username));
     }
 
+    #[Route('/api/modifier', methods: ['PUT'])]
+    #[OA\Put(description: 'Modifie un post et retourne ses informations')]
+    #[OA\Response(
+        response: 200,
+        description: 'Le post mis à jour',
+        content: new OA\JsonContent(ref: new Model(type: Post::class))
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'description', type: 'string'),
+                new OA\Property(property: 'id', type: 'int'),
+            ]
+        )
+    )]
+    #[OA\Tag(name: 'posts')]
+    public function updatePost(ManagerRegistry $doctrine)
+    {
+        $entityManager = $doctrine->getManager();
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(), true);
+        $id = $data['id'];
+        $post = $doctrine->getRepository(Post::class)->find($id);
+
+        if (!$post) {
+            throw $this->createNotFoundException('Pas de post trouvé avec l\'ID ' . $id);
+        }
+
+        $post->setDescription($data['description']);
+
+        $entityManager->persist($post);
+        $entityManager->flush();
+
+        return new Response($this->jsonConverter->encodeToJson($post), 200);
+    }
+
 }
