@@ -124,7 +124,7 @@ class PostController extends AbstractController
     }
 
 
-    #[Route('/api/posts/{id}', methods: ['DELETE'])]
+    #[Route('/api/deletepost/{id}', methods: ['DELETE'])]
     #[OA\Delete(description: 'Supprime un post correspondant à un identifiant')]
     #[OA\Response(
         response: 200,
@@ -147,7 +147,7 @@ class PostController extends AbstractController
 
         if (!$post) {
             throw $this->createNotFoundException(
-                'Pas de commentaire avec id ' . $id
+                'Pas de post avec id ' . $id
             );
         }
 

@@ -19,7 +19,7 @@ class Commentaire
     #[ORM\Column(length: 255)]
     private ?string $valeur = null;
 
-    #[ORM\ManyToOne(inversedBy: 'commentaires', cascade: ['persist'])]
+    #[ORM\ManyToOne(inversedBy: 'commentaires', cascade: ['persist'])]  
     private ?User $user = null;
 
     #[ORM\OneToMany(mappedBy: 'commentaire', targetEntity: Like::class)]
@@ -28,13 +28,16 @@ class Commentaire
     #[ORM\OneToMany(mappedBy: 'commentaire', targetEntity: Dislike::class)]
     private Collection $dislikes;
 
-    #[ORM\ManyToOne(inversedBy: 'commentaires', cascade: ['remove'])]
+    #[ORM\ManyToOne(inversedBy: 'commentaires')]
+    #[ORM\JoinColumn(onDelete: "CASCADE")]
     private ?Post $post = null;
 
-    #[ORM\ManyToOne(inversedBy: 'reponses')]
+    #[ORM\ManyToOne(inversedBy: 'reponses', targetEntity: self::class)]
+    #[ORM\JoinColumn(onDelete: "CASCADE")]
     private ?Commentaire $parent = null;
 
-    #[ORM\OneToMany(mappedBy: 'parent', targetEntity: Commentaire::class)]
+    #[ORM\OneToMany(mappedBy: 'parent', targetEntity: self::class)]
+    #[ORM\JoinColumn(onDelete: "CASCADE")]
     private Collection $responses;
 
 

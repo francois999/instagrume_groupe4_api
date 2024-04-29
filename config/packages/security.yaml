@@ -32,6 +32,8 @@ security:
         - { path: ^/api/commentaires, roles: PUBLIC_ACCESS }
         - { path: ^/api/posts, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: ROLE_USER }
+        - { path: ^/api/changerMdp, roles: ROLE_USER }
+        - { path: ^/api/deletepost, roles: ROLE_USER }
 
 when@test:
     security:

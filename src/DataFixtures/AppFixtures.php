@@ -41,9 +41,9 @@ class AppFixtures extends Fixture {
 
         $userAdmin = new User();
         $userAdmin->setUserName('admin');
-        $userAdmin->setRoles(['ROLE_ADMIN']);
+        $userAdmin->setRoles(['ROLE_ADMIN', 'ROLE_USER']);
         $userAdmin->setPassword($this->passwordHasher->hashPassword($userAdmin, 'password'));
-        $userStandard1->setBanned(false);
+        $userAdmin->setBanned(false);
         $manager->persist($userAdmin);
 
         $comment1 = new Commentaire();

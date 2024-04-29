@@ -56,17 +56,14 @@ class UserController extends AbstractController {
         $data = json_decode($request->getContent(), true);
 
         if(!is_array($data) || $data == null || empty($data['username']) || empty($data['password'])) {
-            return new Response('Identifiants invalides', 401);
+            return new JsonResponse('Identifiants invalides');
         }
 
         $entityManager = $doctrine->getManager();
         $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $data['username']]);
 
-        if(!$user) {
-            throw $this->createNotFoundException();
-        }
-        if(!$this->passwordHasher->isPasswordValid($user, $data['password'])) {
-            return new Response('Identifiants invalides', 401);
+        if(!$user || !$this->passwordHasher->isPasswordValid($user, $data['password'])) {
+            return new JsonResponse(['error'=>'Identifiants invalides']);
         }
 
         $token = $JWTManager->create($user);
@@ -122,25 +119,48 @@ class UserController extends AbstractController {
         description: 'L\'utilisateur correspondant au token passé dans le header',
         content: new OA\JsonContent(ref: new Model(type: User::class))
     )]
+    #[OA\Response(response: 401, description: 'Authentification requise')]
     #[OA\Tag(name: 'utilisateurs')]
     public function getUtilisateur(JWTEncoderInterface $jwtEncoder, Request $request, ManagerRegistry $doctrine) {
         $tokenString = str_replace('Bearer ', '', $request->headers->get('Authorization'));
-        $userArray = $jwtEncoder->decode($tokenString);
-
+    
+        if (empty($tokenString)) {
+            return new Response('Authentification requise', 401);
+        }
+    
+        try {
+            $userArray = $jwtEncoder->decode($tokenString);
+        } catch (\Exception $e) {
+            return new Response('Token JWT invalide', 401);
+        }
+    
         //RECUPERER LES INFOS DE USER
         $entityManager = $doctrine->getManager();
-        $username = $userArray['username'];
-        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
-        $userData = [
-            'id' => $user->getId(),
-            'username' => $user->getUsername(),
-            'roles' => $user->getRoles(),
-            'posts' => $user->getPosts(),
-            'banned' => $user->isBanned(),
-        ];
+        if (isset($userArray['username'])) {
+            $username = $userArray['username'];
+            
+            $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+           // return new Response($user);
+            if (!$user) {
+                return new Response('Utilisateur non trouvé', 404);
+            }
+        
+            $userData = [
+                'id' => $user->getId(),
+                'username' => $user->getUsername(),
+                'roles' => $user->getRoles(),
+                'posts' => $user->getPosts(),
+                'banned' => $user->isBanned(),
+            ];
+        
+            return new Response($this->jsonConverter->encodeToJson($userData));
+        } else {
+            // Gérer le cas où la clé 'username' n'existe pas dans le tableau $userArray
+            return new Response('Clé "username" non trouvée dans le tableau', 500);
+        }
 
-        return new Response($this->jsonConverter->encodeToJson($userData));
     }
+    
 
     #[Route('/api/users', methods: ['GET'])]
     #[OA\Get(description: 'Retourne la liste de tous les utilisateurs')]
@@ -216,17 +236,12 @@ class UserController extends AbstractController {
         return new Response("L'utilisateur a bien été ban");
     }
 
-    #[Route('/api/changerMdp', methods: ['PUT'])]
+    #[Route('/api/changerMdp', methods: ['POST'])]
     #[OA\Post(description: 'Modifier le mdp')]
     #[OA\Response(
         response: 200,
-        description: 'Le mdp a été modifié',
-        content: new OA\JsonContent(
-            type: 'object',
-            properties: [
-                'message' => ['type' => 'string']
-            ]
-        )
+        description: 'Le mot de passe a été modifié',
+        content: new OA\JsonContent(ref: new Model(type: User::class))
     )]
     #[OA\RequestBody(
         required: true,

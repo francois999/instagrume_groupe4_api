@@ -59,6 +59,8 @@ class CommentaireController extends AbstractController
         return new Response($this->jsonConverter->encodeToJson($comments));
     }
 
+
+
     #[Route('/api/commentaires', methods: ['PUT'])]
     #[OA\Put(description: 'Modifie un commentaire et retourne ses informations')]
     #[OA\Response(
@@ -322,6 +324,7 @@ class CommentaireController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         $entityManager = $doctrine->getManager();
+        $commentaire = $entityManager->getRepository(Commentaire::class)->find($commentaireId);
 
         $comm = new Commentaire();
         if (isset($data['valeur'])) {
@@ -329,7 +332,7 @@ class CommentaireController extends AbstractController
         }
 
         
-        $comm->setParent($commentaireId);
+        $comm->setParent($commentaire);
 
         $user = $this->getUser();
         $comm->setUser($user);

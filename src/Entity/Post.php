@@ -24,6 +24,9 @@ class Post
     #[ORM\ManyToOne(inversedBy: 'posts')]
     private ?User $user = null;
 
+    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Commentaire::class, orphanRemoval: true)]
+    private Collection $commentaires;
+
     #[ORM\OneToMany(mappedBy: 'post', targetEntity: Like::class)]
     private Collection $likes;
 
@@ -32,6 +35,7 @@ class Post
 
     public function __construct()
     {
+        $this->commentaires = new ArrayCollection();
         $this->likes = new ArrayCollection();
         $this->dislikes = new ArrayCollection();
     }
@@ -83,6 +87,36 @@ class Post
     public function getLikes(): Collection
     {
         return $this->likes;
+    }
+
+        /**
+     * @return Collection<int, Commentaire>
+     */
+    public function getCommentaires(): Collection
+    {
+        return $this->commentaires;
+    }
+
+    public function addCommentaire(Commentaire $commentaire): static
+    {
+        if (!$this->commentaires->contains($commentaire)) {
+            $this->commentaires->add($commentaire);
+            $commentaire->setPost($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommentaire(Commentaire $commentaire): static
+    {
+        if ($this->commentaires->removeElement($commentaire)) {
+            // set the owning side to null (unless already changed)
+            if ($commentaire->getPost() === $this) {
+                $commentaire->setPost(null);
+            }
+        }
+
+        return $this;
     }
 
     public function addLike(Like $like): static
