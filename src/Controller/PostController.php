@@ -112,11 +112,13 @@ class PostController extends AbstractController
         $photoFilePath = $photosDirectory . $photoFileName;
         file_put_contents($photoFilePath, $photoData);
         $post->setPhoto($photoFileName);
+        $entityManager = $doctrine->getManager();
 
-        $user = $this->getUser();
+        $user = $entityManager->getRepository(User::class)->find($data["id"]);
         $post->setUser($user);
 
-        $entityManager = $doctrine->getManager();
+
+        
         $entityManager->persist($post);
         $entityManager->flush();
 
@@ -175,6 +177,7 @@ class PostController extends AbstractController
         $entityManager = $doctrine->getManager();
 
         $posts = $entityManager->getRepository(Post::class)->findAll();
+
         return new Response($this->jsonConverter->encodeToJson($posts));
     }
 
